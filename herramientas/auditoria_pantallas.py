@@ -17,7 +17,11 @@ PUERTO = 8768
 PAGINA = f'http://localhost:{PUERTO}/index.html'
 VISTAS = {
     'inicio': "",
-    # 'ventas': "document.querySelector('[data-view=ventas]')?.click()",
+    'acento': "window.IKI.ir(1)",
+    'superficie': "window.IKI.ir(2)",
+    'inspiracion': "window.IKI.ir(7)",
+    'nota': "window.IKI.ir(11)",
+    'resumen': "window.IKI.ir(12)",
 }
 # AJUSTAR: si la web necesita sesión, inyectarla aquí (localStorage, cookie...). Nunca guardar secretos en el repo.
 INICIO_SESION_JS = ""
