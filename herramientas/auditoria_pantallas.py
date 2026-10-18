@@ -22,6 +22,11 @@ VISTAS = {
     'inspiracion': "window.IKI.ir(7)",
     'nota': "window.IKI.ir(11)",
     'resumen': "window.IKI.ir(12)",
+    'nudo_texto': "window.IKI.ir(0,'nudo')",
+    'nudo_usuarios': "window.IKI.ir(2,'nudo')",
+    'nudo_tipo': "window.IKI.ir(3,'nudo')",
+    'nudo_sobria': "window.IKI.ir(10,'nudo')",
+    'nudo_resumen': "window.IKI.ir(12,'nudo')",
 }
 # AJUSTAR: si la web necesita sesión, inyectarla aquí (localStorage, cookie...). Nunca guardar secretos en el repo.
 INICIO_SESION_JS = ""
