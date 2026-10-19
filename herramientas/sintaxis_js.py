@@ -4,6 +4,7 @@ import re, subprocess, sys, tempfile, os
 raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAGINAS = ['index.html', 'perfil.html']          # AJUSTAR
 CARPETAS_JS = ['js', 'herramientas']  # AJUSTAR
+ARCHIVOS_JS = ['auth.js']  # AJUSTAR: .js sueltos en la raíz
 malos = []
 def revisar(codigo, nombre):
     with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8') as t: t.write(codigo); n = t.name
@@ -21,6 +22,8 @@ for d in CARPETAS_JS:
     for f in os.listdir(dd):
         if f.endswith('.js') and f != 'auditoria.js':
             revisar(open(os.path.join(dd, f), encoding='utf-8').read(), f'{d}/{f}')
+for f in ARCHIVOS_JS:
+    if os.path.exists(os.path.join(raiz, f)): revisar(open(os.path.join(raiz, f), encoding='utf-8').read(), f)
 if malos:
     print('❌ JavaScript con errores de sintaxis:'); [print(' -', x) for x in malos]; sys.exit(1)
 print('✓ JavaScript sin errores de sintaxis')
