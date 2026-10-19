@@ -16,17 +16,14 @@ PUERTO = 8768
 # Cada vista es un trozo de JS que la abre (clic en su botón, cambio de hash, etc.).
 PAGINA = f'http://localhost:{PUERTO}/index.html'
 VISTAS = {
-    'inicio': "",
-    'acento': "window.IKI.ir(1)",
-    'superficie': "window.IKI.ir(2)",
-    'inspiracion': "window.IKI.ir(7)",
-    'nota': "window.IKI.ir(11)",
-    'resumen': "window.IKI.ir(12)",
-    'nudo_texto': "window.IKI.ir(0,'nudo')",
-    'nudo_usuarios': "window.IKI.ir(2,'nudo')",
-    'nudo_tipo': "window.IKI.ir(3,'nudo')",
-    'nudo_sobria': "window.IKI.ir(10,'nudo')",
-    'nudo_resumen': "window.IKI.ir(12,'nudo')",
+    'inicio_vacio': "window.IKI.ir('inicio')",
+    'inicio': "window.IKI.prueba(); window.IKI.ir('inicio'); window.IKI.prueba()",
+    'registro': "window.IKI.prueba(); window.IKI.ir('registro')",
+    'explorar': "window.IKI.prueba(); window.IKI.ir('explorar')",
+    'patrones': "window.IKI.prueba(); window.IKI.ir('patrones')",
+    'retrato': "window.IKI.prueba(); window.IKI.ir('retrato')",
+    'perfil_enlace': "@perfil",
+    'perfil_nudo': "@perfil window.IKI.ir(0,'nudo')",
 }
 # AJUSTAR: si la web necesita sesión, inyectarla aquí (localStorage, cookie...). Nunca guardar secretos en el repo.
 INICIO_SESION_JS = ""
@@ -51,7 +48,9 @@ async def main():
         for nombre, js in VISTAS.items():
             if os.environ.get('SOLO') and nombre != os.environ['SOLO']: continue
             pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
-            await pg.goto(PAGINA); await pg.wait_for_timeout(ESPERA_MS)
+            url = PAGINA.replace('index.html', 'perfil.html') if js.startswith('@perfil') else PAGINA
+            js = js.replace('@perfil', '').strip()
+            await pg.goto(url); await pg.wait_for_timeout(ESPERA_MS)
             if js: await pg.evaluate(js); await pg.wait_for_timeout(2500)
             prev, quieto, t0 = -1, 0, time.time()
             while time.time() - t0 < 20:   # espera a que la pantalla deje de cambiar (datos cargados)
