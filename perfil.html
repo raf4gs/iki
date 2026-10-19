@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="oscuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b12">
+<title>IKI · Perfil base</title>
+<style>
+  :root {
+    --bg: #f5f6fb; --surf: rgba(255,255,255,.72); --borde: rgba(20,20,45,.12);
+    --txt: #14141f; --suave: #5b5e75; --sombra: 0 14px 40px rgba(40,40,90,.10);
+    --accent: #2f7bff; --accent2: #22d3ee;
+    --radio: 18px; --gap: 14px; --mov: .5s; --blur: 18px; --bw: 1px;
+    --fuente: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) { --bg: #0b0b12; --surf: rgba(255,255,255,.06); --borde: rgba(255,255,255,.14); --txt: #f4f4fa; --suave: #a4a7bf; --sombra: 0 14px 40px rgba(0,0,0,.45); }
+  }
+  :root[data-tema="oscuro"] { --bg: #0b0b12; --surf: rgba(255,255,255,.06); --borde: rgba(255,255,255,.14); --txt: #f4f4fa; --suave: #a4a7bf; --sombra: 0 14px 40px rgba(0,0,0,.45); }
+  :root[data-sup="plano"] { --blur: 0px; --sombra: none; --surf: transparent; }
+  :root[data-sup="relieve"] { --sombra: 0 22px 50px rgba(30,30,80,.22); }
+  :root[data-sup="contraste"] { --bw: 2px; --borde: color-mix(in srgb, var(--txt) 55%, transparent); --sombra: none; }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; min-height: 100vh; font-family: var(--fuente); color: var(--txt); line-height: 1.4;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    background:
+      radial-gradient(70% 45% at 8% -8%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%),
+      radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, var(--accent2) 30%, transparent), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  .app { max-width: 480px; margin: 0 auto; padding: 20px 18px 48px; display: flex; flex-direction: column; gap: var(--gap); overflow-wrap: anywhere; }
+  .volver { align-self: flex-start; white-space: nowrap; text-decoration: none; color: var(--txt); font-size: .85rem; font-weight: 600; border: 1.5px solid var(--borde); padding: 7px 15px; border-radius: 999px; }
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .marca { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #version { font-size: .78rem; color: var(--suave); border: 1px solid var(--borde); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+  .fases { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .fase { font: inherit; background: transparent; cursor: pointer; white-space: nowrap; padding: 7px 15px; border-radius: 999px; border: 1.5px solid var(--borde); color: var(--suave); font-size: .85rem; font-weight: 600; }
+  .fase:disabled, .fase.bloq { opacity: .5; cursor: default; }
+  .fase.actual { border-color: var(--accent); color: var(--txt); }
+  .progreso { display: flex; flex-direction: column; gap: 8px; }
+  .barra { height: 6px; border-radius: 99px; background: var(--borde); overflow: hidden; }
+  .barra i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width calc(var(--mov) * 1.4) ease; }
+  .meta { display: flex; justify-content: space-between; font-size: .8rem; color: var(--suave); }
+  .tarjeta { background: var(--surf); border: var(--bw) solid var(--borde); border-radius: calc(var(--radio) + 6px); padding: calc(var(--gap) + 8px); box-shadow: var(--sombra); -webkit-backdrop-filter: blur(var(--blur)); backdrop-filter: blur(var(--blur)); animation: entra calc(var(--mov) * 1.2) ease both; }
+  @keyframes entra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .tarjeta { animation: none; } }
+  .etq { font-size: .74rem; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  h2 { margin: 6px 0 4px; font-size: 1.65rem; line-height: 1.15; letter-spacing: -.025em; text-wrap: balance; }
+  .sub { color: var(--suave); font-size: .92rem; margin: 0 0 var(--gap); text-wrap: pretty; }
+  .ops { display: flex; flex-direction: column; gap: calc(var(--gap) - 4px); }
+  .op { display: grid; grid-template-columns: 52px 1fr; gap: 14px; align-items: center; width: 100%; text-align: left; padding: 12px; border-radius: var(--radio); border: 1.5px solid var(--borde); background: transparent; color: inherit; font: inherit; cursor: pointer; transition: border-color calc(var(--mov) * .6) ease, box-shadow calc(var(--mov) * .6) ease, transform calc(var(--mov) * .6) ease; }
+  .op:hover { transform: translateY(-1px); }
+  .op.elegida { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent); }
+  .sw { width: 52px; height: 52px; border-radius: calc(var(--radio) * .6); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; border: 1px solid var(--borde); color: #fff; }
+  .op b { display: block; font-size: 1rem; }
+  .op small { display: block; font-size: .82rem; color: var(--suave); margin-top: 2px; }
+  textarea { width: 100%; min-height: 120px; padding: 14px; border-radius: var(--radio); border: 1.5px solid var(--borde); background: transparent; color: inherit; font: inherit; font-size: 16px; resize: vertical; }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .acciones { display: flex; gap: 10px; margin-top: calc(var(--gap) + 6px); }
+  .btn { flex: 1; padding: 14px 18px; border-radius: calc(var(--radio) * .85); border: 1.5px solid var(--borde); background: transparent; color: var(--txt); font: inherit; font-weight: 600; cursor: pointer; transition: transform calc(var(--mov) * .5) ease, opacity calc(var(--mov) * .5) ease; }
+  .btn.pri { border-color: transparent; color: #fff; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { white-space: nowrap; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--borde); font-size: .82rem; color: var(--txt); }
+  .perfil h3 { margin: 0 0 10px; font-size: .95rem; }
+  .vacio { margin: 0; font-size: .85rem; color: var(--suave); }
+  .fila { display: flex; justify-content: space-between; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--borde); font-size: .9rem; }
+  .fila:last-child { border-bottom: 0; }
+  .fila span { color: var(--suave); }
+  .fila b { text-align: right; max-width: 62%; }
+  textarea.corta { min-height: 84px; margin-top: var(--gap); }
+  #estado { min-height: 1em; font-size: .78rem; color: var(--suave); text-align: right; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><div class="marca">IKI</div><span id="version">V1.05</span></div>
+  <a class="volver" href="index.html">Volver a IKI</a>
+  <div class="fases" id="fases"></div>
+  <div class="progreso"><div class="barra"><i id="rel"></i></div><div class="meta"><span id="cont">Pregunta 1 de 12</span><span id="estado"></span></div></div>
+  <div id="vista"></div>
+  <div class="tarjeta perfil" id="perfil"></div>
+</div>
+<script>
+(function () {
+  var SB = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/iki_respuestas';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bHdmZHF2Y3hscmtqb2hsZ2lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMTU5NzUsImV4cCI6MjEwNzg5MTk3NX0.CmCl8SiFQB5g6OGvIE9CFYsHxFyyri15OekNdIySqHM';
+  var H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+  var ACC = function (a, b) { return { acento: [a, b] }; };
+  var ENL = [
+    { id: 'ambiente', t: 'Ambiente', q: '¿Cómo prefieres ver la aplicación?', s: 'La pantalla se adapta en cuanto eliges.', op: [
+      { v: 'oscuro', l: 'Oscuro', d: 'Fondo profundo y contraste alto', sw: 'background:linear-gradient(135deg,#0b0b12,#2a2a45)', tg: ['sobrio', 'nocturno'], ap: { tema: 'oscuro' } },
+      { v: 'claro', l: 'Claro', d: 'Fondo luminoso y limpio', sw: 'background:linear-gradient(135deg,#ffffff,#dfe3f2)', tg: ['limpio', 'luminoso'], ap: { tema: 'claro' } },
+      { v: 'auto', l: 'Automático', d: 'Sigue el ajuste del dispositivo', sw: 'background:linear-gradient(135deg,#ffffff 50%,#14141f 50%)', tg: ['flexible'], ap: { tema: 'auto' } } ] },
+    { id: 'acento', t: 'Color', q: '¿Qué color debe guiar la aplicación?', s: 'Será el color de acento en todas las pantallas.', op: [
+      { v: 'violeta', l: 'Violeta', d: 'Creativo y distintivo', sw: 'background:linear-gradient(135deg,#7c5cff,#c26bff)', tg: ['creativo'], ap: ACC('#7c5cff', '#c26bff') },
+      { v: 'azul', l: 'Azul eléctrico', d: 'Confianza y claridad', sw: 'background:linear-gradient(135deg,#2f7bff,#22d3ee)', tg: ['confiable', 'fresco'], ap: ACC('#2f7bff', '#22d3ee') },
+      { v: 'esmeralda', l: 'Esmeralda', d: 'Calma y crecimiento', sw: 'background:linear-gradient(135deg,#10b981,#a3e635)', tg: ['natural', 'fresco'], ap: ACC('#10b981', '#84cc16') },
+      { v: 'coral', l: 'Coral', d: 'Energía y cercanía', sw: 'background:linear-gradient(135deg,#ff5a4e,#ffb347)', tg: ['vibrante', 'cálido'], ap: ACC('#ff5a4e', '#ff9f43') },
+      { v: 'ambar', l: 'Ámbar', d: 'Optimismo y foco', sw: 'background:linear-gradient(135deg,#f59e0b,#fde047)', tg: ['cálido', 'vibrante'], ap: ACC('#f59e0b', '#f5c400') },
+      { v: 'rosa', l: 'Rosa', d: 'Expresivo y atrevido', sw: 'background:linear-gradient(135deg,#ec4899,#fb7185)', tg: ['expresivo', 'vibrante'], ap: ACC('#ec4899', '#fb7185') } ] },
+    { id: 'superficie', t: 'Superficies', q: '¿Qué estilo de superficies te atrae?', s: 'Define cómo se ven las tarjetas y los paneles.', op: [
+      { v: 'cristal', l: 'Cristal translúcido', d: 'Capas con desenfoque suave', sw: 'background:linear-gradient(135deg,rgba(124,92,255,.7),rgba(34,211,238,.35))', tg: ['moderno', 'futurista'], ap: { sup: 'cristal' } },
+      { v: 'plano', l: 'Plano limpio', d: 'Sin sombras ni efectos', sw: 'background:#8d92ad', tg: ['minimalista', 'sobrio'], ap: { sup: 'plano' } },
+      { v: 'relieve', l: 'Relieve suave', d: 'Sombras amplias y profundidad', sw: 'background:#c9cde0;box-shadow:inset 0 -6px 12px rgba(0,0,0,.25)', tg: ['táctil', 'elegante'], ap: { sup: 'relieve' } },
+      { v: 'contraste', l: 'Contraste fuerte', d: 'Bordes marcados, estilo gráfico', sw: 'background:linear-gradient(90deg,#111 50%,#fff 50%)', tg: ['audaz', 'gráfico'], ap: { sup: 'contraste' } } ] },
+    { id: 'forma', t: 'Formas', q: '¿Cómo deben ser las esquinas?', s: 'Afecta a tarjetas, botones y campos.', op: [
+      { v: 'redondas', l: 'Muy redondeadas', d: 'Amables y orgánicas', sw: 'background:var(--accent);border-radius:50%', tg: ['amable'], ap: { radio: 28 } },
+      { v: 'medias', l: 'Equilibradas', d: 'Modernas y versátiles', sw: 'background:var(--accent);border-radius:16px', tg: ['moderno'], ap: { radio: 18 } },
+      { v: 'rectas', l: 'Casi rectas', d: 'Precisas y técnicas', sw: 'background:var(--accent);border-radius:4px', tg: ['técnico', 'sobrio'], ap: { radio: 6 } } ] },
+    { id: 'densidad', t: 'Densidad', q: '¿Cuánto espacio quieres entre los elementos?', s: 'Determina el ritmo y la altura de cada pantalla.', op: [
+      { v: 'aireada', l: 'Aireada', d: 'Mucho espacio, una idea a la vez', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 12px 10px/28px 6px no-repeat,linear-gradient(#8d92ad,#8d92ad) 12px 36px/28px 6px no-repeat', tg: ['calmado'], ap: { gap: 20 } },
+      { v: 'equilibrada', l: 'Equilibrada', d: 'Ritmo cómodo para leer', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 12px 12px/28px 6px no-repeat,linear-gradient(#8d92ad,#8d92ad) 12px 24px/28px 6px no-repeat,linear-gradient(#8d92ad,#8d92ad) 12px 36px/28px 6px no-repeat', tg: ['práctico'], ap: { gap: 14 } },
+      { v: 'compacta', l: 'Compacta', d: 'Más información en pantalla', sw: 'background:repeating-linear-gradient(#8d92ad 0 4px,transparent 4px 8px) 12px 8px/28px 36px no-repeat', tg: ['eficiente', 'técnico'], ap: { gap: 9 } } ] },
+    { id: 'tipografia', t: 'Tipografía', q: '¿Qué carácter debe tener el texto?', s: 'Se aplica a toda la aplicación.', op: [
+      { v: 'geometrica', l: 'Moderna y geométrica', d: 'Limpia, como las apps actuales', sw: 'background:#4b4f6b;font-family:ui-sans-serif,system-ui,sans-serif', tx: 'Aa', tg: ['moderno'], ap: { fuente: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' } },
+      { v: 'serif', l: 'Elegante con serifa', d: 'Editorial y con personalidad', sw: 'background:#4b4f6b;font-family:ui-serif,Georgia,serif', tx: 'Aa', tg: ['elegante', 'editorial'], ap: { fuente: 'ui-serif, Georgia, Times New Roman, serif' } },
+      { v: 'mono', l: 'Técnica monoespaciada', d: 'Precisa, estilo código', sw: 'background:#4b4f6b;font-family:ui-monospace,Menlo,Consolas,monospace', tx: 'Aa', tg: ['técnico', 'futurista'], ap: { fuente: 'ui-monospace, SF Mono, Menlo, Consolas, monospace' } } ] },
+    { id: 'movimiento', t: 'Movimiento', q: '¿Cómo deben moverse los elementos?', s: 'Transiciones al cambiar de pregunta o pantalla.', op: [
+      { v: 'sutil', l: 'Sutil', d: 'Transiciones rápidas y discretas', sw: 'background:linear-gradient(135deg,#8d92ad,#5b5e75)', tg: ['sobrio'], ap: { mov: .22 } },
+      { v: 'fluido', l: 'Fluido', d: 'Animaciones suaves y visibles', sw: 'background:linear-gradient(135deg,var(--accent),var(--accent2))', tg: ['dinámico'], ap: { mov: .5 } },
+      { v: 'ninguno', l: 'Sin animaciones', d: 'Todo cambia al instante', sw: 'background:#2b2d40', tg: ['eficiente'], ap: { mov: 0 } } ] },
+    { id: 'inspiracion', t: 'Inspiración', q: '¿Qué aplicaciones te inspiran?', s: 'Puedes elegir varias.', multi: true, op: [
+      { v: 'notion', l: 'Notion', d: 'Orden, calma y bloques', sw: 'background:#2b2d40', tx: 'N', tg: ['orden', 'calmado'] },
+      { v: 'linear', l: 'Linear', d: 'Precisión y velocidad', sw: 'background:linear-gradient(135deg,#5e6ad2,#2b2d70)', tx: 'L', tg: ['preciso', 'técnico'] },
+      { v: 'arc', l: 'Arc', d: 'Color, personalidad y espacios', sw: 'background:linear-gradient(135deg,#ff5a8a,#6a5cff)', tx: 'A', tg: ['expresivo', 'moderno'] },
+      { v: 'spotify', l: 'Spotify', d: 'Contraste y tarjetas visuales', sw: 'background:linear-gradient(135deg,#1db954,#0b3d20)', tx: 'S', tg: ['visual', 'audaz'] },
+      { v: 'airbnb', l: 'Airbnb', d: 'Fotografía grande y cercanía', sw: 'background:linear-gradient(135deg,#ff5a5f,#ff9a8b)', tx: 'A', tg: ['visual', 'cálido'] },
+      { v: 'stripe', l: 'Stripe', d: 'Degradados y claridad técnica', sw: 'background:linear-gradient(135deg,#635bff,#00d4ff)', tx: 'S', tg: ['elegante', 'futurista'] },
+      { v: 'apple', l: 'Apple', d: 'Sencillez y detalle cuidado', sw: 'background:linear-gradient(135deg,#3a3a3c,#8e8e93)', tx: 'A', tg: ['minimalista', 'elegante'] } ] },
+    { id: 'navegacion', t: 'Navegación', q: '¿Cómo quieres moverte por la aplicación?', s: 'Elige la forma que te resulte más natural.', op: [
+      { v: 'barra', l: 'Barra inferior', d: 'Accesos siempre al alcance del pulgar', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 6px 38px/40px 6px no-repeat,#3a3d55', tg: ['práctico'] },
+      { v: 'central', l: 'Un botón central', d: 'Una acción principal destacada', sw: 'background:radial-gradient(circle at 50% 70%,var(--accent) 0 9px,transparent 10px),#3a3d55', tg: ['sencillo'] },
+      { v: 'lateral', l: 'Menú lateral', d: 'Todo ordenado en un panel', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 6px 6px/10px 40px no-repeat,#3a3d55', tg: ['ordenado'] },
+      { v: 'gestos', l: 'Gestos y tarjetas', d: 'Deslizar para avanzar', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 10px 12px/32px 28px no-repeat,#3a3d55', tg: ['dinámico', 'visual'] } ] },
+    { id: 'imagen', t: 'Imagen', q: '¿Qué tipo de contenido visual prefieres?', s: 'Puedes elegir varios.', multi: true, op: [
+      { v: 'foto', l: 'Fotografía', d: 'Imágenes reales y grandes', sw: 'background:linear-gradient(135deg,#3b82f6,#f59e0b)', tg: ['visual', 'cálido'] },
+      { v: 'ilustracion', l: 'Ilustración', d: 'Dibujos con estilo propio', sw: 'background:linear-gradient(135deg,#ec4899,#8b5cf6)', tg: ['expresivo', 'creativo'] },
+      { v: 'datos', l: 'Datos y gráficos', d: 'Visualizaciones que cuentan algo', sw: 'background:linear-gradient(#22d3ee,#22d3ee) 8px 28px/8px 16px no-repeat,linear-gradient(#22d3ee,#22d3ee) 22px 18px/8px 26px no-repeat,linear-gradient(#22d3ee,#22d3ee) 36px 10px/8px 34px no-repeat,#2b2d40', tg: ['analítico', 'técnico'] },
+      { v: 'tipo', l: 'Solo tipografía', d: 'Texto grande como protagonista', sw: 'background:#2b2d40', tx: 'Tt', tg: ['minimalista', 'editorial'] } ] },
+    { id: 'sensacion', t: 'Sensación', q: '¿Qué sensación debe transmitir?', s: 'Puedes elegir varias.', multi: true, op: [
+      { v: 'sobria', l: 'Sobria', d: 'Seria y serena', sw: 'background:#3a3d55', tg: ['sobrio'] },
+      { v: 'vibrante', l: 'Vibrante', d: 'Llena de energía', sw: 'background:linear-gradient(135deg,#ff5a4e,#ec4899)', tg: ['vibrante'] },
+      { v: 'calida', l: 'Cálida', d: 'Cercana y acogedora', sw: 'background:linear-gradient(135deg,#f59e0b,#ff7a59)', tg: ['cálido'] },
+      { v: 'futurista', l: 'Futurista', d: 'Tecnológica y atrevida', sw: 'background:linear-gradient(135deg,#00d4ff,#7c5cff)', tg: ['futurista'] },
+      { v: 'minimalista', l: 'Minimalista', d: 'Solo lo esencial', sw: 'background:#e5e7f0', tg: ['minimalista'] },
+      { v: 'lujosa', l: 'Premium', d: 'Refinada y exclusiva', sw: 'background:linear-gradient(135deg,#1a1a1f,#b8975a)', tg: ['elegante'] } ] },
+    { id: 'nota', t: 'Tu aportación', q: '¿Algo más?', s: 'Escribe con libertad cómo imaginas la aplicación.', texto: true }
+  ];
+
+  var DEF = 'background:linear-gradient(135deg,var(--accent),var(--accent2))';
+  var NUD = [
+    { id: 'proposito', t: 'Propósito', q: '¿Qué es IKI?', s: 'Descríbelo con tus palabras, en una o dos frases.', texto: true, req: true, ph: 'IKI es' },
+    { id: 'problema', t: 'Problema', q: '¿Qué problema debe resolver?', s: 'Piensa en lo que hoy te resulta difícil o lento.', texto: true, req: true, ph: 'Escribe aquí' },
+    { id: 'usuario', t: 'Usuarios', q: '¿Quién va a usarlo?', s: 'Puedes elegir varias opciones.', multi: true, nota: true, ph: 'Añade algún detalle si quieres', op: [
+      { v: 'solo', l: 'Solo yo', d: 'Uso personal' },
+      { v: 'equipo', l: 'Mi equipo', d: 'Un grupo reducido' },
+      { v: 'clientes', l: 'Clientes', d: 'Personas externas' },
+      { v: 'publico', l: 'Público general', d: 'Abierto a cualquiera' } ] },
+    { id: 'tipo', t: 'Tipo', q: '¿Qué tipo de aplicación es?', s: 'Elige la que más se parezca.', nota: true, ph: 'Cuéntame más si quieres', op: [
+      { v: 'panel', l: 'Panel personal', d: 'Seguimiento de tus datos' },
+      { v: 'herramienta', l: 'Herramienta de trabajo', d: 'Resuelve tareas concretas' },
+      { v: 'web', l: 'Web pública', d: 'Se muestra a otras personas' },
+      { v: 'comunidad', l: 'Comunidad', d: 'Personas que interactúan' },
+      { v: 'otro', l: 'Otro', d: 'Descríbelo abajo' } ] },
+    { id: 'datos', t: 'Datos', q: '¿Qué datos debe recopilar?', s: 'Puedes elegir varios.', multi: true, nota: true, ph: 'Añade otros datos si quieres', op: [
+      { v: 'texto', l: 'Texto y notas', d: 'Ideas, apuntes y descripciones' },
+      { v: 'numeros', l: 'Números y métricas', d: 'Medidas, importes y contadores' },
+      { v: 'fechas', l: 'Fechas y recordatorios', d: 'Plazos y eventos' },
+      { v: 'archivos', l: 'Archivos e imágenes', d: 'Documentos y fotografías' },
+      { v: 'lugares', l: 'Ubicaciones', d: 'Sitios y rutas' } ] },
+    { id: 'frecuencia', t: 'Frecuencia', q: '¿Con qué frecuencia lo usarás?', s: 'Una estimación es suficiente.', op: [
+      { v: 'muchas', l: 'Varias veces al día', d: 'Uso constante' },
+      { v: 'diaria', l: 'A diario', d: 'Una rutina fija' },
+      { v: 'semanal', l: 'Cada semana', d: 'Un repaso periódico' },
+      { v: 'ocasional', l: 'De vez en cuando', d: 'Uso puntual' } ] },
+    { id: 'dispositivo', t: 'Dispositivo', q: '¿Dónde lo usarás más?', s: 'Define qué pantalla se cuida primero.', op: [
+      { v: 'movil', l: 'Móvil', d: 'En cualquier lugar' },
+      { v: 'ordenador', l: 'Ordenador', d: 'Sesiones de trabajo' },
+      { v: 'ambos', l: 'Ambos por igual', d: 'Se adapta a los dos' } ] },
+    { id: 'pantallas', t: 'Pantallas', q: '¿Qué pantallas imaginas?', s: 'Nómbralas aunque sea de forma aproximada.', texto: true, req: true, ph: 'Una por línea' },
+    { id: 'exito', t: 'Éxito', q: '¿Cómo sabrás que funciona?', s: 'Qué debería ocurrir para que estés satisfecho.', texto: true, req: true, ph: 'Escribe aquí' },
+    { id: 'referencia', t: 'Referencias', q: '¿Hay alguna web o app parecida?', s: 'Indica nombres o enlaces. Si no hay ninguna, escribe que no.', texto: true, req: true, ph: 'Escribe aquí' },
+    { id: 'sobria', t: 'Sobriedad', q: '¿Qué significa para ti «sobria»?', s: 'Elegiste una sensación sobria. Puedes elegir varias.', multi: true, op: [
+      { v: 'poco', l: 'Pocos colores', d: 'Mucho espacio vacío' },
+      { v: 'serio', l: 'Tono serio', d: 'Textos formales y claros' },
+      { v: 'discreta', l: 'Animaciones discretas', d: 'Nada llamativo' },
+      { v: 'oscura', l: 'Tonos oscuros', d: 'Fondos profundos' } ] },
+    { id: 'vibrante', t: 'Energía', q: '¿Dónde debe notarse la energía?', s: 'También elegiste vibrante y cálida. Puedes elegir varias.', multi: true, op: [
+      { v: 'acento', l: 'En el color de acento', d: 'Pequeños toques de color' },
+      { v: 'graficos', l: 'En gráficos y datos', d: 'Visualizaciones con vida' },
+      { v: 'animacion', l: 'En las animaciones', d: 'Movimiento fluido' },
+      { v: 'ilustracion', l: 'En las ilustraciones', d: 'Dibujos con carácter' },
+      { v: 'tono', l: 'En el tono de los textos', d: 'Un lenguaje cercano' } ] }
+  ];
+  ENL.forEach(function (p) { p.fase = 'enlace'; });
+  NUD.forEach(function (p) { p.fase = 'nudo'; });
+  NUD.forEach(function (p) { (p.op || []).forEach(function (o) { o.sw = o.sw || DEF; o.tx = o.tx || o.l.charAt(0); }); });
+  ENL.concat(NUD).forEach(function (p) { (p.op || []).forEach(function (o) { o.tg = o.tg || []; }); });
+  var LIST = { enlace: ENL, nudo: NUD }, NOM = { enlace: 'Enlace', nudo: 'Nudo' };
+  var fa = 'enlace', PREG = ENL;
+
+  var R = {}, i = 0, fin = false, cargado = false;
+  var $ = function (s) { return document.querySelector(s); };
+
+  function estado(t) { $('#estado').textContent = t; }
+  function valores(p) { return (R[p.id] && R[p.id].valores) || []; }
+  function notaDe(p) { return (R[p.id] && R[p.id].nota) || ''; }
+  function respondida(p) { return !!R[p.id]; }
+  function completa(f) { return LIST[f].every(respondida); }
+  function primera(f) { var k = LIST[f].findIndex(function (p) { return !respondida(p); }); return k < 0 ? 0 : k; }
+  function buscar(p, v) { return (p.op || []).filter(function (x) { return x.v === v; })[0]; }
+  function etiq(p, v) { var o = buscar(p, v); return o ? o.l : v; }
+
+  function aplicar() {
+    var r = document.documentElement, c = {};
+    ENL.forEach(function (p) { valores(p).forEach(function (v) { var o = buscar(p, v); if (o && o.ap) Object.keys(o.ap).forEach(function (k) { c[k] = o.ap[k]; }); }); });
+    if (c.acento) { r.style.setProperty('--accent', c.acento[0]); r.style.setProperty('--accent2', c.acento[1]); }
+    if (c.tema) r.setAttribute('data-tema', c.tema);
+    if (c.sup) r.setAttribute('data-sup', c.sup);
+    if (c.radio != null) r.style.setProperty('--radio', c.radio + 'px');
+    if (c.gap != null) r.style.setProperty('--gap', c.gap + 'px');
+    if (c.fuente) r.style.setProperty('--fuente', c.fuente);
+    if (c.mov != null) r.style.setProperty('--mov', c.mov + 's');
+  }
+
+  function tendencias() {
+    var n = {};
+    ENL.concat(NUD).forEach(function (p) { valores(p).forEach(function (v) { var o = buscar(p, v); (o ? o.tg : []).forEach(function (t) { n[t] = (n[t] || 0) + 1; }); }); });
+    return Object.keys(n).sort(function (a, b) { return n[b] - n[a]; }).slice(0, 6).map(function (t) { return t.charAt(0).toUpperCase() + t.slice(1); });
+  }
+
+  function pintarPerfil() {
+    var t = tendencias(), e = $('#perfil');
+    e.innerHTML = '<h3>Lo que voy detectando</h3>' + (t.length ? '<div class="chips">' + t.map(function (x) { return '<span class="chip">' + x + '</span>'; }).join('') + '</div>' : '<p class="vacio">Aún sin datos.</p>');
+  }
+
+  function pintarFases() {
+    $('#fases').innerHTML =
+      '<button type="button" class="fase' + (fa === 'enlace' ? ' actual' : '') + '" data-f="enlace">Enlace</button>' +
+      '<button type="button" class="fase' + (fa === 'nudo' ? ' actual' : '') + '" data-f="nudo"' + (completa('enlace') ? '' : ' disabled') + '>Nudo</button>' +
+      '<span class="fase bloq">Desenlace</span>';
+    document.querySelectorAll('#fases button').forEach(function (b) { b.addEventListener('click', function () { cambiarFase(b.getAttribute('data-f')); }); });
+  }
+
+  function cambiarFase(f) { if (f === fa) return; fa = f; PREG = LIST[f]; fin = false; i = primera(f); pintar(true); }
+
+  function guardar(p) {
+    var tg = [];
+    valores(p).forEach(function (x) { var o = buscar(p, x); if (o) tg = tg.concat(o.tg); });
+    estado('Guardando');
+    fetch(SB + '?on_conflict=pregunta_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, H), body: JSON.stringify({ pregunta_id: p.id, fase: p.fase, pregunta: p.q, valores: valores(p), etiquetas: tg, nota: notaDe(p) || null, actualizado_at: new Date().toISOString() }) })
+      .then(function (r) { estado(r.ok ? 'Guardado' : 'No se pudo guardar'); })
+      .catch(function () { estado('Sin conexión'); });
+  }
+
+  function cargar() {
+    return fetch(SB + '?select=pregunta_id,valores,nota', { headers: H }).then(function (r) { return r.ok ? r.json() : []; }).then(function (f) {
+      f.forEach(function (x) { R[x.pregunta_id] = { valores: x.valores || [], nota: x.nota || '' }; });
+      fa = completa('enlace') ? 'nudo' : 'enlace'; PREG = LIST[fa];
+      if (completa(fa)) { fin = true; i = PREG.length - 1; } else i = primera(fa);
+    }).catch(function () {});
+  }
+
+  function textoActual() { var n = $('#nota'); return n ? n.value : null; }
+
+  function elegir(p, v) {
+    var a = valores(p).slice(), k = a.indexOf(v), t = textoActual();
+    if (p.multi) { if (k >= 0) a.splice(k, 1); else a.push(v); } else a = [v];
+    R[p.id] = { valores: a, nota: t !== null ? t : notaDe(p) };
+    aplicar(); guardar(p); pintar(false);
+    if (!p.multi && !p.nota && !p.texto) setTimeout(function () { if (PREG[i] === p) siguiente(); }, 420);
+  }
+
+  function guardarTexto(p) { var t = textoActual(); if (t === null) return; R[p.id] = { valores: valores(p), nota: t }; guardar(p); }
+  function siguiente() { if (i < PREG.length - 1) i++; else fin = true; pintar(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  function anterior() { if (fin) { fin = false; i = PREG.length - 1; } else if (i > 0) i--; pintar(true); }
+
+  function resumenFila(q) {
+    var a = valores(q).map(function (x) { return etiq(q, x); }), n = notaDe(q).trim();
+    if (n) a.push(n.length > 90 ? n.slice(0, 90) + '...' : n);
+    return '<div class="fila"><span>' + q.t + '</span><b>' + (a.length ? a.join(', ') : 'Sin responder') + '</b></div>';
+  }
+
+  function pintar(anim) {
+    var v = $('#vista'), p = PREG[i], pct, sa = anim ? '' : 'animation:none';
+    pintarFases();
+    if (fin) {
+      pct = 100; $('#cont').textContent = NOM[fa] + ' completado';
+      var intro = fa === 'enlace' ? 'La aplicación ya se ha adaptado a lo que has elegido.' : 'Con estos datos, la fase de desenlace interconectará todas tus respuestas para encontrar coincidencias y patrones.';
+      v.innerHTML = '<div class="tarjeta" style="' + sa + '"><div class="etq">' + NOM[fa] + ' completado</div><h2>' + (fa === 'enlace' ? 'Perfil completo' : 'Propósito definido') + '</h2><p class="sub">' + intro + '</p>' +
+        PREG.filter(function (q) { return q.op || q.texto; }).filter(function (q) { return q.id !== 'nota'; }).map(resumenFila).join('') +
+        '<div class="acciones"><button class="btn" id="ant" type="button">Revisar respuestas</button></div></div>';
+    } else {
+      pct = Math.round(i / PREG.length * 100); $('#cont').textContent = NOM[fa] + ' · Pregunta ' + (i + 1) + ' de ' + PREG.length;
+      var h = '<div class="tarjeta" style="' + sa + '"><div class="etq">' + p.t + '</div><h2>' + p.q + '</h2><p class="sub">' + p.s + '</p>';
+      if (p.op) h += '<div class="ops">' + p.op.map(function (o) { var on = valores(p).indexOf(o.v) >= 0; return '<button type="button" class="op' + (on ? ' elegida' : '') + '" role="' + (p.multi ? 'checkbox' : 'radio') + '" aria-checked="' + on + '" data-v="' + o.v + '"><span class="sw" style="' + o.sw + '">' + (o.tx || '') + '</span><span><b>' + o.l + '</b><small>' + o.d + '</small></span></button>'; }).join('') + '</div>';
+      if (p.texto || p.nota) h += '<textarea id="nota" class="' + (p.texto ? '' : 'corta') + '" placeholder="' + (p.ph || 'Escribe aquí') + '"></textarea>';
+      var ok = p.texto ? (!p.req || notaDe(p).trim().length > 2) : valores(p).length > 0;
+      h += '<div class="acciones">' + (i > 0 ? '<button class="btn" id="ant" type="button">Anterior</button>' : '') + '<button class="btn pri" id="sig" type="button"' + (ok ? '' : ' disabled') + '>' + (i === PREG.length - 1 ? 'Finalizar' : 'Continuar') + '</button></div></div>';
+      v.innerHTML = h;
+      var n = $('#nota');
+      if (n) {
+        n.value = notaDe(p);
+        n.addEventListener('input', function () { if (p.texto && p.req) $('#sig').disabled = n.value.trim().length <= 2; });
+        n.addEventListener('change', function () { guardarTexto(p); });
+      }
+    }
+    $('#rel').style.width = pct + '%';
+    var a = $('#ant'); if (a) a.addEventListener('click', anterior);
+    var s = $('#sig'); if (s) s.addEventListener('click', function () { guardarTexto(p); siguiente(); });
+    document.querySelectorAll('.op').forEach(function (b) { b.addEventListener('click', function () { elegir(p, b.getAttribute('data-v')); }); });
+    pintarPerfil();
+  }
+
+  window.IKI = { ir: function (n, f) { if (f) { fa = f; PREG = LIST[f]; } fin = n >= PREG.length; i = Math.min(n, PREG.length - 1); pintar(false); } };
+  cargar().then(function () { cargado = true; aplicar(); pintar(false); });
+  setTimeout(function () { if (!cargado) pintar(false); }, 2500);
+})();
+</script>
+</body>
+</html>
