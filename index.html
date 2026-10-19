@@ -54,7 +54,7 @@
   label { display: block; margin: 14px 0 6px; font-size: .8rem; color: var(--suave); }
   .nivel { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; }
   .nivel label { margin: 0 0 6px; }
-  input[type="text"], input[type="date"], input[type="url"], select, textarea { width: 100%; padding: 12px 14px; border-radius: calc(var(--radio) * .75); border: 1.5px solid var(--borde); background: transparent; color: inherit; font: inherit; font-size: 16px; }
+  input[type="text"], input[type="date"], input[type="url"], input[type="password"], select, textarea { width: 100%; padding: 12px 14px; border-radius: calc(var(--radio) * .75); border: 1.5px solid var(--borde); background: transparent; color: inherit; font: inherit; font-size: 16px; }
   textarea { min-height: 96px; resize: vertical; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
   input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -101,16 +101,16 @@
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.05</span></div></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.06</span><button class="mini" data-act="salir">Salir</button></div></div>
   <div id="pantalla"></div>
 </div>
 <nav class="nav"><div class="nav-in" id="nav"></div></nav>
+<script src="auth.js"></script>
 <script>
 (function () {
   'use strict';
   const BASE = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/';
-  const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bHdmZHF2Y3hscmtqb2hsZ2lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMTU5NzUsImV4cCI6MjEwNzg5MTk3NX0.CmCl8SiFQB5g6OGvIE9CFYsHxFyyri15OekNdIySqHM';
-  const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
   const S = { registros: [], intereses: [], retrato: [], resp: [] };
   let vista = 'inicio', cargando = true, fallo = false;
 
@@ -151,7 +151,9 @@
   const PARADAS = new Set(['porque', 'aunque', 'cuando', 'donde', 'sobre', 'entre', 'hacer', 'estaba', 'tengo', 'tiene', 'había', 'pero', 'también', 'mucho', 'muchas', 'hacía', 'desde', 'hasta', 'todo', 'todos', 'estoy', 'hemos', 'estar', 'sido', 'algo', 'ahora', 'después', 'antes', 'durante', 'fueron', 'podría', 'aquí', 'este', 'esta', 'esto', 'estos', 'estas', 'para', 'como', 'unos', 'unas', 'poco', 'bastante']);
 
   async function api(met, tabla, q, cuerpo) {
-    const r = await fetch(BASE + tabla + (q ? '?' + q : ''), { method: met, headers: Object.assign({ Prefer: 'return=representation' }, H), body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+    const h = await IKIAuth.cabeceras();
+    const r = await fetch(BASE + tabla + (q ? '?' + q : ''), { method: met, headers: Object.assign({ Prefer: 'return=representation' }, h), body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+    if (r.status === 401) { IKIAuth.caducada(); throw new Error('401'); }
     if (!r.ok) throw new Error(String(r.status));
     const t = await r.text();
     return t ? JSON.parse(t) : [];
@@ -323,6 +325,7 @@
       l.forEach((x) => { t += '<div class="fila"><span>' + esc(x.texto) + '</span><span class="bt">' + (c[0] === 'quiero' ? '<button class="mini' + (x.hecho ? ' elegida' : '') + '" data-act="hecho" data-id="' + x.id + '">Hecho</button>' : '') + '<button class="mini" data-act="quitar" data-id="' + x.id + '">Quitar</button></span></div>'; });
       t += '<div class="add"><input id="c-' + c[0] + '" type="text" maxlength="100" placeholder="' + c[2] + '"><button class="mini" data-act="add-retrato" data-cat="' + c[0] + '">Añadir</button></div></div>';
     });
+    t += '<div class="tarjeta"><h3>Cuenta</h3><p class="sub">Cambia tu contraseña cuando quieras.</p><label for="cuenta-pass">Nueva contraseña</label><input id="cuenta-pass" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"><div class="acciones" style="flex-direction:column"><button class="btn" data-act="cambiar-pass">Cambiar contraseña</button><button class="btn" data-act="salir">Cerrar sesión</button></div></div>';
     t += '<div class="tarjeta"><h3>Perfil base</h3><p class="sub">Tus respuestas de enlace y nudo siguen guardadas y alimentan los patrones.</p><div class="acciones" style="margin-top:0"><a class="btn" href="perfil.html">Revisar mi perfil base</a></div></div>';
     return t;
   }
@@ -330,7 +333,7 @@
 
   function pintar(anim, limpiar) {
     const cont = $('#pantalla'), guardado = {};
-    cont.querySelectorAll('input[id],textarea[id],select[id]').forEach((e) => { guardado[e.id] = e.value; });
+    cont.querySelectorAll('input[id],textarea[id],select[id]').forEach((e) => { if (e.type !== 'password') guardado[e.id] = e.value; });
     $('#nav').innerHTML = NAV.map((n) => '<button type="button" class="' + (n[0] === vista ? 'actual' : '') + '" data-ir="' + n[0] + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + n[2] + '</svg>' + n[1] + '</button>').join('');
     let h = '';
     if (cargando) h = '<div class="tarjeta"><p class="vacio">Cargando tus datos.</p></div>';
@@ -364,7 +367,14 @@
     },
     'hecho': (b) => guarda(async () => { const x = S.retrato.filter((y) => y.id === b.dataset.id)[0]; const r = await api('PATCH', 'iki_retrato', 'id=eq.' + x.id, { hecho: !x.hecho }); S.retrato = S.retrato.map((y) => (y.id === x.id ? r[0] : y)); }),
     'quitar': (b) => guarda(async () => { await api('DELETE', 'iki_retrato', 'id=eq.' + b.dataset.id); S.retrato = S.retrato.filter((x) => x.id !== b.dataset.id); }),
-    'recargar': () => cargar()
+    'recargar': () => cargar(),
+    'salir': () => IKIAuth.salir(),
+    'cambiar-pass': () => {
+      const n = document.getElementById('cuenta-pass') ? document.getElementById('cuenta-pass').value : '';
+      if (n.length < 8) { estado('Mínimo 8 caracteres'); return; }
+      estado('Guardando');
+      IKIAuth.cambiarPassword(n).then(() => { estado('Contraseña cambiada'); pintar(false, ['cuenta-pass']); }).catch(() => estado('No se pudo cambiar'));
+    }
   };
   document.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-act],[data-ir]');
@@ -390,7 +400,7 @@
       cargando = false; fallo = false; pintar(false);
     }
   };
-  cargar();
+  IKIAuth.listo.then(cargar);
 })();
 </script>
 </body>
