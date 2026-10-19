@@ -2,7 +2,7 @@
 # Lo llama publicar.sh. Necesita node.
 import re, subprocess, sys, tempfile, os
 raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PAGINAS = ['index.html']          # AJUSTAR
+PAGINAS = ['index.html', 'perfil.html']          # AJUSTAR
 CARPETAS_JS = ['js', 'herramientas']  # AJUSTAR
 malos = []
 def revisar(codigo, nombre):
