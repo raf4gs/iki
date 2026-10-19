@@ -101,7 +101,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.06</span><button class="mini" data-act="salir">Salir</button></div></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.07</span><button class="mini" data-act="salir">Salir</button></div></div>
   <div id="pantalla"></div>
 </div>
 <nav class="nav"><div class="nav-in" id="nav"></div></nav>
@@ -295,7 +295,7 @@
       t += '<div class="tarjeta"><h3>' + es[1] + '</h3>';
       l.forEach((i) => {
         const rs = regsDe(i.id), sc = puntua(rs);
-        t += '<div class="item"><div class="cab"><b>' + esc(i.nombre) + '</b><small>' + (rs.length ? rs.length + (rs.length === 1 ? ' registro' : ' registros') : 'Sin registros') + '</small></div>' +
+        t += '<div class="item"><div class="cab"><b>' + esc(i.nombre) + '</b><small>' + (rs.length ? rs.length + (rs.length === 1 ? ' registro' : ' registros') : 'Sin registros') + '</small></div>' + (i.nota ? '<p>' + esc(i.nota) + '</p>' : '') +
           (sc != null ? '<div class="barra-r"><i style="width:' + sc * 10 + '%"></i></div><small>Puntuación media ' + num(sc) + ' sobre 10</small>' : '') +
           '<div class="seg">' + ESTADOS.map((x) => '<button class="' + (x[0] === i.estado ? 'elegida' : '') + '" data-act="estado-interes" data-id="' + i.id + '" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
           '<div class="acciones" style="margin-top:2px"><button class="mini" data-act="eliminar-interes" data-id="' + i.id + '">Eliminar</button></div></div>';
@@ -392,7 +392,7 @@
     ir: (v) => { vista = v; cargando = false; fallo = false; pintar(false); },
     prueba: () => {
       const h = hoy(), f = (n) => suma(h, -n);
-      S.intereses = [{ id: 'a', nombre: 'Programación', estado: 'probando' }, { id: 'b', nombre: 'Deporte al aire libre', estado: 'probando' }, { id: 'c', nombre: 'Lectura', estado: 'por_probar' }, { id: 'd', nombre: 'Pintura', estado: 'descartado' }];
+      S.intereses = [{ id: 'a', nombre: 'Programación', estado: 'probando', nota: 'Le llama la atención, pero cuando se vuelve complejo puede que deje de llamarle.' }, { id: 'b', nombre: 'Deporte al aire libre', estado: 'probando' }, { id: 'c', nombre: 'Lectura', estado: 'por_probar' }, { id: 'd', nombre: 'Pintura', estado: 'descartado' }];
       const d = [[0, 'Proyecto de código', 9, 9, 'a'], [1, 'Paseo largo', 7, 8, 'b'], [3, 'Lectura nocturna', 5, 6, 'c'], [5, 'Proyecto de código', 8, 9, 'a'], [8, 'Clase de pintura', 3, 3, 'd'], [10, 'Salida en bicicleta', 8, 7, 'b'], [13, 'Proyecto de código', 9, 8, 'a'], [16, 'Lectura de ensayo', 6, 6, 'c'], [20, 'Clase de pintura', 4, 3, 'd'], [24, 'Proyecto de código', 8, 9, 'a']];
       S.registros = d.map((x, k) => ({ id: 'r' + k, fecha: f(x[0]), titulo: x[1], texto: x[0] % 2 ? 'Me concentré durante horas y aprendí algo nuevo' : null, energia: x[2], ilusion: x[3], interes_id: x[4], enlace: null }));
       S.retrato = [{ id: 't1', categoria: 'apasiona', texto: 'Crear objetos con las manos', hecho: false }, { id: 't2', categoria: 'quiero', texto: 'Viajar solo durante un mes', hecho: false }, { id: 't3', categoria: 'quiero', texto: 'Terminar un proyecto propio', hecho: true }, { id: 't4', categoria: 'no_quiero', texto: 'Trabajos sin autonomía', hecho: false }];
