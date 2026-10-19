@@ -7,316 +7,390 @@
 <title>IKI</title>
 <style>
   :root {
-    --bg: #f5f6fb; --surf: rgba(255,255,255,.72); --borde: rgba(20,20,45,.12);
-    --txt: #14141f; --suave: #5b5e75; --sombra: 0 14px 40px rgba(40,40,90,.10);
+    color-scheme: dark;
+    --bg: #0b0b12; --surf: rgba(255,255,255,.06); --borde: rgba(255,255,255,.14);
+    --txt: #f4f4fa; --suave: #a4a7bf; --sombra: 0 14px 40px rgba(0,0,0,.45);
     --accent: #2f7bff; --accent2: #22d3ee;
     --radio: 18px; --gap: 14px; --mov: .5s; --blur: 18px; --bw: 1px;
     --fuente: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-tema="claro"]) { --bg: #0b0b12; --surf: rgba(255,255,255,.06); --borde: rgba(255,255,255,.14); --txt: #f4f4fa; --suave: #a4a7bf; --sombra: 0 14px 40px rgba(0,0,0,.45); }
-  }
-  :root[data-tema="oscuro"] { --bg: #0b0b12; --surf: rgba(255,255,255,.06); --borde: rgba(255,255,255,.14); --txt: #f4f4fa; --suave: #a4a7bf; --sombra: 0 14px 40px rgba(0,0,0,.45); }
-  :root[data-sup="plano"] { --blur: 0px; --sombra: none; --surf: transparent; }
-  :root[data-sup="relieve"] { --sombra: 0 22px 50px rgba(30,30,80,.22); }
-  :root[data-sup="contraste"] { --bw: 2px; --borde: color-mix(in srgb, var(--txt) 55%, transparent); --sombra: none; }
+  :root[data-tema="claro"] { color-scheme: light; --bg: #f5f6fb; --surf: rgba(255,255,255,.72); --borde: rgba(20,20,45,.12); --txt: #14141f; --suave: #5b5e75; --sombra: 0 14px 40px rgba(40,40,90,.10); }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
   body {
     margin: 0; min-height: 100vh; font-family: var(--fuente); color: var(--txt); line-height: 1.4;
-    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    padding: env(safe-area-inset-top, 0px) 0 0;
     background:
       radial-gradient(70% 45% at 8% -8%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%),
       radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, var(--accent2) 30%, transparent), transparent 70%),
       var(--bg);
     background-attachment: fixed;
   }
-  .app { max-width: 480px; margin: 0 auto; padding: 20px 18px 48px; display: flex; flex-direction: column; gap: var(--gap); overflow-wrap: anywhere; }
-  .top { display: flex; align-items: center; justify-content: space-between; }
+  .app { max-width: 480px; margin: 0 auto; padding: 20px 18px 130px; display: flex; flex-direction: column; gap: var(--gap); overflow-wrap: anywhere; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .marca { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .der { display: flex; align-items: center; gap: 10px; }
+  #estado { font-size: .78rem; color: var(--suave); white-space: nowrap; }
   #version { font-size: .78rem; color: var(--suave); border: 1px solid var(--borde); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
-  .fases { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-  .fase { font: inherit; background: transparent; cursor: pointer; white-space: nowrap; padding: 7px 15px; border-radius: 999px; border: 1.5px solid var(--borde); color: var(--suave); font-size: .85rem; font-weight: 600; }
-  .fase:disabled, .fase.bloq { opacity: .5; cursor: default; }
-  .fase.actual { border-color: var(--accent); color: var(--txt); }
-  .progreso { display: flex; flex-direction: column; gap: 8px; }
-  .barra { height: 6px; border-radius: 99px; background: var(--borde); overflow: hidden; }
-  .barra i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width calc(var(--mov) * 1.4) ease; }
-  .meta { display: flex; justify-content: space-between; font-size: .8rem; color: var(--suave); }
-  .tarjeta { background: var(--surf); border: var(--bw) solid var(--borde); border-radius: calc(var(--radio) + 6px); padding: calc(var(--gap) + 8px); box-shadow: var(--sombra); -webkit-backdrop-filter: blur(var(--blur)); backdrop-filter: blur(var(--blur)); animation: entra calc(var(--mov) * 1.2) ease both; }
+  .pantalla { display: flex; flex-direction: column; gap: var(--gap); animation: entra calc(var(--mov) * .8) ease both; }
   @keyframes entra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .tarjeta { animation: none; } }
+  .tarjeta { background: var(--surf); border: var(--bw) solid var(--borde); border-radius: calc(var(--radio) + 6px); padding: calc(var(--gap) + 8px); box-shadow: var(--sombra); -webkit-backdrop-filter: blur(var(--blur)); backdrop-filter: blur(var(--blur)); }
   .etq { font-size: .74rem; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
-  h2 { margin: 6px 0 4px; font-size: 1.65rem; line-height: 1.15; letter-spacing: -.025em; text-wrap: balance; }
+  h2 { margin: 6px 0 4px; font-size: 1.6rem; line-height: 1.15; letter-spacing: -.025em; text-wrap: balance; }
+  h3 { margin: 0 0 10px; font-size: .98rem; }
   .sub { color: var(--suave); font-size: .92rem; margin: 0 0 var(--gap); text-wrap: pretty; }
-  .ops { display: flex; flex-direction: column; gap: calc(var(--gap) - 4px); }
-  .op { display: grid; grid-template-columns: 52px 1fr; gap: 14px; align-items: center; width: 100%; text-align: left; padding: 12px; border-radius: var(--radio); border: 1.5px solid var(--borde); background: transparent; color: inherit; font: inherit; cursor: pointer; transition: border-color calc(var(--mov) * .6) ease, box-shadow calc(var(--mov) * .6) ease, transform calc(var(--mov) * .6) ease; }
-  .op:hover { transform: translateY(-1px); }
-  .op.elegida { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent); }
-  .sw { width: 52px; height: 52px; border-radius: calc(var(--radio) * .6); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; border: 1px solid var(--borde); color: #fff; }
-  .op b { display: block; font-size: 1rem; }
-  .op small { display: block; font-size: .82rem; color: var(--suave); margin-top: 2px; }
-  textarea { width: 100%; min-height: 120px; padding: 14px; border-radius: var(--radio); border: 1.5px solid var(--borde); background: transparent; color: inherit; font: inherit; font-size: 16px; resize: vertical; }
-  textarea:focus { outline: none; border-color: var(--accent); }
-  .acciones { display: flex; gap: 10px; margin-top: calc(var(--gap) + 6px); }
-  .btn { flex: 1; padding: 14px 18px; border-radius: calc(var(--radio) * .85); border: 1.5px solid var(--borde); background: transparent; color: var(--txt); font: inherit; font-weight: 600; cursor: pointer; transition: transform calc(var(--mov) * .5) ease, opacity calc(var(--mov) * .5) ease; }
-  .btn.pri { border-color: transparent; color: #fff; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-  .btn:disabled { opacity: .4; cursor: default; }
+  p { margin: 0; }
+  .vacio { color: var(--suave); font-size: .88rem; }
+  .kpis { display: flex; gap: 12px; }
+  .kpi { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; border: 1px solid var(--borde); border-radius: var(--radio); }
+  .kpi small { color: var(--suave); font-size: .8rem; }
+  .num { font-size: 22px; font-weight: 800; fill: var(--txt); }
+  .anillo { animation: llena calc(var(--mov) * 2.4) ease both; }
+  @keyframes llena { from { stroke-dashoffset: var(--c); } }
+  .grande { font-size: 2rem; font-weight: 800; letter-spacing: -.03em; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { white-space: nowrap; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--borde); font-size: .82rem; color: var(--txt); }
-  .perfil h3 { margin: 0 0 10px; font-size: .95rem; }
-  .vacio { margin: 0; font-size: .85rem; color: var(--suave); }
-  .fila { display: flex; justify-content: space-between; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--borde); font-size: .9rem; }
-  .fila:last-child { border-bottom: 0; }
-  .fila span { color: var(--suave); }
-  .fila b { text-align: right; max-width: 62%; }
-  textarea.corta { min-height: 84px; margin-top: var(--gap); }
-  #estado { min-height: 1em; font-size: .78rem; color: var(--suave); text-align: right; }
+  .chip { white-space: nowrap; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--borde); font-size: .8rem; color: var(--txt); }
+  .punto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  label { display: block; margin: 14px 0 6px; font-size: .8rem; color: var(--suave); }
+  .nivel { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; }
+  .nivel label { margin: 0 0 6px; }
+  input[type="text"], input[type="date"], input[type="url"], select, textarea { width: 100%; padding: 12px 14px; border-radius: calc(var(--radio) * .75); border: 1.5px solid var(--borde); background: transparent; color: inherit; font: inherit; font-size: 16px; }
+  textarea { min-height: 96px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  select option { background: var(--bg); color: var(--txt); }
+  .acciones { display: flex; gap: 10px; margin-top: calc(var(--gap) + 4px); }
+  .btn { flex: 1; display: block; text-align: center; text-decoration: none; padding: 14px 18px; border-radius: calc(var(--radio) * .85); border: 1.5px solid var(--borde); background: transparent; color: var(--txt); font: inherit; font-weight: 600; cursor: pointer; transition: transform calc(var(--mov) * .5) ease; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.pri { border-color: transparent; color: #fff; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .mini { white-space: nowrap; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--borde); background: transparent; color: var(--suave); font: inherit; font-size: .8rem; cursor: pointer; }
+  .mini.elegida, .seg button.elegida { border-color: var(--accent); color: var(--txt); }
+  .seg { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .seg button { white-space: nowrap; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--borde); background: transparent; color: var(--suave); font: inherit; font-size: .8rem; cursor: pointer; }
+  .item { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--borde); border-radius: var(--radio); }
+  .item + .item { margin-top: 10px; }
+  .cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .cab small, .item small { color: var(--suave); font-size: .8rem; }
+  .item p { font-size: .9rem; color: var(--suave); }
+  .item a { color: var(--accent); text-decoration: none; font-size: .85rem; font-weight: 600; }
+  .fila { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--borde); font-size: .92rem; }
+  .fila:last-of-type { border-bottom: 0; }
+  .fila .bt { display: flex; gap: 6px; }
+  .add { display: flex; gap: 8px; margin-top: 12px; }
+  .add .mini { padding: 0 16px; color: var(--txt); }
+  .grafico svg { width: 100%; height: auto; display: block; }
+  .eje { fill: var(--suave); font-size: 9px; }
+  .rej { stroke: var(--borde); stroke-width: 1; }
+  .linea { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; animation: dibuja calc(var(--mov) * 3) ease both; }
+  @keyframes dibuja { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  .rank { margin-top: 12px; }
+  .rank .tx { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; margin-bottom: 5px; }
+  .rank .tx span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .barra-r { height: 8px; border-radius: 99px; background: var(--borde); overflow: hidden; }
+  .barra-r i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent2)); transform-origin: left; animation: crece calc(var(--mov) * 2) ease both; }
+  @keyframes crece { from { transform: scaleX(0); } }
+  .lectura { display: flex; flex-direction: column; gap: 10px; }
+  .lectura p { font-size: .92rem; padding-left: 12px; border-left: 2px solid var(--accent); }
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: center; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--bg) 72%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid var(--borde); }
+  .nav-in { display: flex; gap: 4px; width: 100%; max-width: 480px; }
+  .nav button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border: 1.5px solid transparent; border-radius: 16px; background: transparent; color: var(--suave); font: inherit; font-size: .68rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color calc(var(--mov) * .5) ease, border-color calc(var(--mov) * .5) ease; }
+  .nav button.actual { border-color: var(--accent); color: var(--txt); }
+  .nav svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-reduced-motion: reduce) { .pantalla, .anillo, .linea, .barra-r i { animation: none; } .linea { stroke-dasharray: none; } }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><span id="version">V1.04</span></div>
-  <div class="fases" id="fases"></div>
-  <div class="progreso"><div class="barra"><i id="rel"></i></div><div class="meta"><span id="cont">Pregunta 1 de 12</span><span id="estado"></span></div></div>
-  <div id="vista"></div>
-  <div class="tarjeta perfil" id="perfil"></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.05</span></div></div>
+  <div id="pantalla"></div>
 </div>
+<nav class="nav"><div class="nav-in" id="nav"></div></nav>
 <script>
 (function () {
-  var SB = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/iki_respuestas';
-  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bHdmZHF2Y3hscmtqb2hsZ2lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMTU5NzUsImV4cCI6MjEwNzg5MTk3NX0.CmCl8SiFQB5g6OGvIE9CFYsHxFyyri15OekNdIySqHM';
-  var H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
-  var ACC = function (a, b) { return { acento: [a, b] }; };
-  var ENL = [
-    { id: 'ambiente', t: 'Ambiente', q: '¿Cómo prefieres ver la aplicación?', s: 'La pantalla se adapta en cuanto eliges.', op: [
-      { v: 'oscuro', l: 'Oscuro', d: 'Fondo profundo y contraste alto', sw: 'background:linear-gradient(135deg,#0b0b12,#2a2a45)', tg: ['sobrio', 'nocturno'], ap: { tema: 'oscuro' } },
-      { v: 'claro', l: 'Claro', d: 'Fondo luminoso y limpio', sw: 'background:linear-gradient(135deg,#ffffff,#dfe3f2)', tg: ['limpio', 'luminoso'], ap: { tema: 'claro' } },
-      { v: 'auto', l: 'Automático', d: 'Sigue el ajuste del dispositivo', sw: 'background:linear-gradient(135deg,#ffffff 50%,#14141f 50%)', tg: ['flexible'], ap: { tema: 'auto' } } ] },
-    { id: 'acento', t: 'Color', q: '¿Qué color debe guiar la aplicación?', s: 'Será el color de acento en todas las pantallas.', op: [
-      { v: 'violeta', l: 'Violeta', d: 'Creativo y distintivo', sw: 'background:linear-gradient(135deg,#7c5cff,#c26bff)', tg: ['creativo'], ap: ACC('#7c5cff', '#c26bff') },
-      { v: 'azul', l: 'Azul eléctrico', d: 'Confianza y claridad', sw: 'background:linear-gradient(135deg,#2f7bff,#22d3ee)', tg: ['confiable', 'fresco'], ap: ACC('#2f7bff', '#22d3ee') },
-      { v: 'esmeralda', l: 'Esmeralda', d: 'Calma y crecimiento', sw: 'background:linear-gradient(135deg,#10b981,#a3e635)', tg: ['natural', 'fresco'], ap: ACC('#10b981', '#84cc16') },
-      { v: 'coral', l: 'Coral', d: 'Energía y cercanía', sw: 'background:linear-gradient(135deg,#ff5a4e,#ffb347)', tg: ['vibrante', 'cálido'], ap: ACC('#ff5a4e', '#ff9f43') },
-      { v: 'ambar', l: 'Ámbar', d: 'Optimismo y foco', sw: 'background:linear-gradient(135deg,#f59e0b,#fde047)', tg: ['cálido', 'vibrante'], ap: ACC('#f59e0b', '#f5c400') },
-      { v: 'rosa', l: 'Rosa', d: 'Expresivo y atrevido', sw: 'background:linear-gradient(135deg,#ec4899,#fb7185)', tg: ['expresivo', 'vibrante'], ap: ACC('#ec4899', '#fb7185') } ] },
-    { id: 'superficie', t: 'Superficies', q: '¿Qué estilo de superficies te atrae?', s: 'Define cómo se ven las tarjetas y los paneles.', op: [
-      { v: 'cristal', l: 'Cristal translúcido', d: 'Capas con desenfoque suave', sw: 'background:linear-gradient(135deg,rgba(124,92,255,.7),rgba(34,211,238,.35))', tg: ['moderno', 'futurista'], ap: { sup: 'cristal' } },
-      { v: 'plano', l: 'Plano limpio', d: 'Sin sombras ni efectos', sw: 'background:#8d92ad', tg: ['minimalista', 'sobrio'], ap: { sup: 'plano' } },
-      { v: 'relieve', l: 'Relieve suave', d: 'Sombras amplias y profundidad', sw: 'background:#c9cde0;box-shadow:inset 0 -6px 12px rgba(0,0,0,.25)', tg: ['táctil', 'elegante'], ap: { sup: 'relieve' } },
-      { v: 'contraste', l: 'Contraste fuerte', d: 'Bordes marcados, estilo gráfico', sw: 'background:linear-gradient(90deg,#111 50%,#fff 50%)', tg: ['audaz', 'gráfico'], ap: { sup: 'contraste' } } ] },
-    { id: 'forma', t: 'Formas', q: '¿Cómo deben ser las esquinas?', s: 'Afecta a tarjetas, botones y campos.', op: [
-      { v: 'redondas', l: 'Muy redondeadas', d: 'Amables y orgánicas', sw: 'background:var(--accent);border-radius:50%', tg: ['amable'], ap: { radio: 28 } },
-      { v: 'medias', l: 'Equilibradas', d: 'Modernas y versátiles', sw: 'background:var(--accent);border-radius:16px', tg: ['moderno'], ap: { radio: 18 } },
-      { v: 'rectas', l: 'Casi rectas', d: 'Precisas y técnicas', sw: 'background:var(--accent);border-radius:4px', tg: ['técnico', 'sobrio'], ap: { radio: 6 } } ] },
-    { id: 'densidad', t: 'Densidad', q: '¿Cuánto espacio quieres entre los elementos?', s: 'Determina el ritmo y la altura de cada pantalla.', op: [
-      { v: 'aireada', l: 'Aireada', d: 'Mucho espacio, una idea a la vez', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 12px 10px/28px 6px no-repeat,linear-gradient(#8d92ad,#8d92ad) 12px 36px/28px 6px no-repeat', tg: ['calmado'], ap: { gap: 20 } },
-      { v: 'equilibrada', l: 'Equilibrada', d: 'Ritmo cómodo para leer', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 12px 12px/28px 6px no-repeat,linear-gradient(#8d92ad,#8d92ad) 12px 24px/28px 6px no-repeat,linear-gradient(#8d92ad,#8d92ad) 12px 36px/28px 6px no-repeat', tg: ['práctico'], ap: { gap: 14 } },
-      { v: 'compacta', l: 'Compacta', d: 'Más información en pantalla', sw: 'background:repeating-linear-gradient(#8d92ad 0 4px,transparent 4px 8px) 12px 8px/28px 36px no-repeat', tg: ['eficiente', 'técnico'], ap: { gap: 9 } } ] },
-    { id: 'tipografia', t: 'Tipografía', q: '¿Qué carácter debe tener el texto?', s: 'Se aplica a toda la aplicación.', op: [
-      { v: 'geometrica', l: 'Moderna y geométrica', d: 'Limpia, como las apps actuales', sw: 'background:#4b4f6b;font-family:ui-sans-serif,system-ui,sans-serif', tx: 'Aa', tg: ['moderno'], ap: { fuente: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' } },
-      { v: 'serif', l: 'Elegante con serifa', d: 'Editorial y con personalidad', sw: 'background:#4b4f6b;font-family:ui-serif,Georgia,serif', tx: 'Aa', tg: ['elegante', 'editorial'], ap: { fuente: 'ui-serif, Georgia, Times New Roman, serif' } },
-      { v: 'mono', l: 'Técnica monoespaciada', d: 'Precisa, estilo código', sw: 'background:#4b4f6b;font-family:ui-monospace,Menlo,Consolas,monospace', tx: 'Aa', tg: ['técnico', 'futurista'], ap: { fuente: 'ui-monospace, SF Mono, Menlo, Consolas, monospace' } } ] },
-    { id: 'movimiento', t: 'Movimiento', q: '¿Cómo deben moverse los elementos?', s: 'Transiciones al cambiar de pregunta o pantalla.', op: [
-      { v: 'sutil', l: 'Sutil', d: 'Transiciones rápidas y discretas', sw: 'background:linear-gradient(135deg,#8d92ad,#5b5e75)', tg: ['sobrio'], ap: { mov: .22 } },
-      { v: 'fluido', l: 'Fluido', d: 'Animaciones suaves y visibles', sw: 'background:linear-gradient(135deg,var(--accent),var(--accent2))', tg: ['dinámico'], ap: { mov: .5 } },
-      { v: 'ninguno', l: 'Sin animaciones', d: 'Todo cambia al instante', sw: 'background:#2b2d40', tg: ['eficiente'], ap: { mov: 0 } } ] },
-    { id: 'inspiracion', t: 'Inspiración', q: '¿Qué aplicaciones te inspiran?', s: 'Puedes elegir varias.', multi: true, op: [
-      { v: 'notion', l: 'Notion', d: 'Orden, calma y bloques', sw: 'background:#2b2d40', tx: 'N', tg: ['orden', 'calmado'] },
-      { v: 'linear', l: 'Linear', d: 'Precisión y velocidad', sw: 'background:linear-gradient(135deg,#5e6ad2,#2b2d70)', tx: 'L', tg: ['preciso', 'técnico'] },
-      { v: 'arc', l: 'Arc', d: 'Color, personalidad y espacios', sw: 'background:linear-gradient(135deg,#ff5a8a,#6a5cff)', tx: 'A', tg: ['expresivo', 'moderno'] },
-      { v: 'spotify', l: 'Spotify', d: 'Contraste y tarjetas visuales', sw: 'background:linear-gradient(135deg,#1db954,#0b3d20)', tx: 'S', tg: ['visual', 'audaz'] },
-      { v: 'airbnb', l: 'Airbnb', d: 'Fotografía grande y cercanía', sw: 'background:linear-gradient(135deg,#ff5a5f,#ff9a8b)', tx: 'A', tg: ['visual', 'cálido'] },
-      { v: 'stripe', l: 'Stripe', d: 'Degradados y claridad técnica', sw: 'background:linear-gradient(135deg,#635bff,#00d4ff)', tx: 'S', tg: ['elegante', 'futurista'] },
-      { v: 'apple', l: 'Apple', d: 'Sencillez y detalle cuidado', sw: 'background:linear-gradient(135deg,#3a3a3c,#8e8e93)', tx: 'A', tg: ['minimalista', 'elegante'] } ] },
-    { id: 'navegacion', t: 'Navegación', q: '¿Cómo quieres moverte por la aplicación?', s: 'Elige la forma que te resulte más natural.', op: [
-      { v: 'barra', l: 'Barra inferior', d: 'Accesos siempre al alcance del pulgar', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 6px 38px/40px 6px no-repeat,#3a3d55', tg: ['práctico'] },
-      { v: 'central', l: 'Un botón central', d: 'Una acción principal destacada', sw: 'background:radial-gradient(circle at 50% 70%,var(--accent) 0 9px,transparent 10px),#3a3d55', tg: ['sencillo'] },
-      { v: 'lateral', l: 'Menú lateral', d: 'Todo ordenado en un panel', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 6px 6px/10px 40px no-repeat,#3a3d55', tg: ['ordenado'] },
-      { v: 'gestos', l: 'Gestos y tarjetas', d: 'Deslizar para avanzar', sw: 'background:linear-gradient(#8d92ad,#8d92ad) 10px 12px/32px 28px no-repeat,#3a3d55', tg: ['dinámico', 'visual'] } ] },
-    { id: 'imagen', t: 'Imagen', q: '¿Qué tipo de contenido visual prefieres?', s: 'Puedes elegir varios.', multi: true, op: [
-      { v: 'foto', l: 'Fotografía', d: 'Imágenes reales y grandes', sw: 'background:linear-gradient(135deg,#3b82f6,#f59e0b)', tg: ['visual', 'cálido'] },
-      { v: 'ilustracion', l: 'Ilustración', d: 'Dibujos con estilo propio', sw: 'background:linear-gradient(135deg,#ec4899,#8b5cf6)', tg: ['expresivo', 'creativo'] },
-      { v: 'datos', l: 'Datos y gráficos', d: 'Visualizaciones que cuentan algo', sw: 'background:linear-gradient(#22d3ee,#22d3ee) 8px 28px/8px 16px no-repeat,linear-gradient(#22d3ee,#22d3ee) 22px 18px/8px 26px no-repeat,linear-gradient(#22d3ee,#22d3ee) 36px 10px/8px 34px no-repeat,#2b2d40', tg: ['analítico', 'técnico'] },
-      { v: 'tipo', l: 'Solo tipografía', d: 'Texto grande como protagonista', sw: 'background:#2b2d40', tx: 'Tt', tg: ['minimalista', 'editorial'] } ] },
-    { id: 'sensacion', t: 'Sensación', q: '¿Qué sensación debe transmitir?', s: 'Puedes elegir varias.', multi: true, op: [
-      { v: 'sobria', l: 'Sobria', d: 'Seria y serena', sw: 'background:#3a3d55', tg: ['sobrio'] },
-      { v: 'vibrante', l: 'Vibrante', d: 'Llena de energía', sw: 'background:linear-gradient(135deg,#ff5a4e,#ec4899)', tg: ['vibrante'] },
-      { v: 'calida', l: 'Cálida', d: 'Cercana y acogedora', sw: 'background:linear-gradient(135deg,#f59e0b,#ff7a59)', tg: ['cálido'] },
-      { v: 'futurista', l: 'Futurista', d: 'Tecnológica y atrevida', sw: 'background:linear-gradient(135deg,#00d4ff,#7c5cff)', tg: ['futurista'] },
-      { v: 'minimalista', l: 'Minimalista', d: 'Solo lo esencial', sw: 'background:#e5e7f0', tg: ['minimalista'] },
-      { v: 'lujosa', l: 'Premium', d: 'Refinada y exclusiva', sw: 'background:linear-gradient(135deg,#1a1a1f,#b8975a)', tg: ['elegante'] } ] },
-    { id: 'nota', t: 'Tu aportación', q: '¿Algo más?', s: 'Escribe con libertad cómo imaginas la aplicación.', texto: true }
+  'use strict';
+  const BASE = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/';
+  const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5bHdmZHF2Y3hscmtqb2hsZ2lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMTU5NzUsImV4cCI6MjEwNzg5MTk3NX0.CmCl8SiFQB5g6OGvIE9CFYsHxFyyri15OekNdIySqHM';
+  const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+  const S = { registros: [], intereses: [], retrato: [], resp: [] };
+  let vista = 'inicio', cargando = true, fallo = false;
+
+  const $ = (s) => document.querySelector(s);
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const num = (n) => (Math.round(n * 10) / 10).toString().replace('.', ',');
+  const media = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  const mayus = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const pad = (n) => (n < 10 ? '0' : '') + n;
+  const iso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const aFecha = (s) => { const p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  const hoy = () => iso(new Date());
+  const suma = (s, n) => { const d = aFecha(s); d.setDate(d.getDate() + n); return iso(d); };
+  const lunes = (s) => { const d = aFecha(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
+  const corta = (s) => { const d = aFecha(s); return d.getDate() + ' ' + MESES[d.getMonth()]; };
+  const estado = (t) => { const e = $('#estado'); if (e) e.textContent = t; };
+
+  const NAV = [
+    ['inicio', 'Inicio', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
+    ['registro', 'Registro', '<path d="M4 20h4L19 9l-4-4L4 16z"/>'],
+    ['explorar', 'Explorar', '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>'],
+    ['patrones', 'Patrones', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
+    ['retrato', 'Retrato', '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/>']
   ];
-
-  var DEF = 'background:linear-gradient(135deg,var(--accent),var(--accent2))';
-  var NUD = [
-    { id: 'proposito', t: 'Propósito', q: '¿Qué es IKI?', s: 'Descríbelo con tus palabras, en una o dos frases.', texto: true, req: true, ph: 'IKI es' },
-    { id: 'problema', t: 'Problema', q: '¿Qué problema debe resolver?', s: 'Piensa en lo que hoy te resulta difícil o lento.', texto: true, req: true, ph: 'Escribe aquí' },
-    { id: 'usuario', t: 'Usuarios', q: '¿Quién va a usarlo?', s: 'Puedes elegir varias opciones.', multi: true, nota: true, ph: 'Añade algún detalle si quieres', op: [
-      { v: 'solo', l: 'Solo yo', d: 'Uso personal' },
-      { v: 'equipo', l: 'Mi equipo', d: 'Un grupo reducido' },
-      { v: 'clientes', l: 'Clientes', d: 'Personas externas' },
-      { v: 'publico', l: 'Público general', d: 'Abierto a cualquiera' } ] },
-    { id: 'tipo', t: 'Tipo', q: '¿Qué tipo de aplicación es?', s: 'Elige la que más se parezca.', nota: true, ph: 'Cuéntame más si quieres', op: [
-      { v: 'panel', l: 'Panel personal', d: 'Seguimiento de tus datos' },
-      { v: 'herramienta', l: 'Herramienta de trabajo', d: 'Resuelve tareas concretas' },
-      { v: 'web', l: 'Web pública', d: 'Se muestra a otras personas' },
-      { v: 'comunidad', l: 'Comunidad', d: 'Personas que interactúan' },
-      { v: 'otro', l: 'Otro', d: 'Descríbelo abajo' } ] },
-    { id: 'datos', t: 'Datos', q: '¿Qué datos debe recopilar?', s: 'Puedes elegir varios.', multi: true, nota: true, ph: 'Añade otros datos si quieres', op: [
-      { v: 'texto', l: 'Texto y notas', d: 'Ideas, apuntes y descripciones' },
-      { v: 'numeros', l: 'Números y métricas', d: 'Medidas, importes y contadores' },
-      { v: 'fechas', l: 'Fechas y recordatorios', d: 'Plazos y eventos' },
-      { v: 'archivos', l: 'Archivos e imágenes', d: 'Documentos y fotografías' },
-      { v: 'lugares', l: 'Ubicaciones', d: 'Sitios y rutas' } ] },
-    { id: 'frecuencia', t: 'Frecuencia', q: '¿Con qué frecuencia lo usarás?', s: 'Una estimación es suficiente.', op: [
-      { v: 'muchas', l: 'Varias veces al día', d: 'Uso constante' },
-      { v: 'diaria', l: 'A diario', d: 'Una rutina fija' },
-      { v: 'semanal', l: 'Cada semana', d: 'Un repaso periódico' },
-      { v: 'ocasional', l: 'De vez en cuando', d: 'Uso puntual' } ] },
-    { id: 'dispositivo', t: 'Dispositivo', q: '¿Dónde lo usarás más?', s: 'Define qué pantalla se cuida primero.', op: [
-      { v: 'movil', l: 'Móvil', d: 'En cualquier lugar' },
-      { v: 'ordenador', l: 'Ordenador', d: 'Sesiones de trabajo' },
-      { v: 'ambos', l: 'Ambos por igual', d: 'Se adapta a los dos' } ] },
-    { id: 'pantallas', t: 'Pantallas', q: '¿Qué pantallas imaginas?', s: 'Nómbralas aunque sea de forma aproximada.', texto: true, req: true, ph: 'Una por línea' },
-    { id: 'exito', t: 'Éxito', q: '¿Cómo sabrás que funciona?', s: 'Qué debería ocurrir para que estés satisfecho.', texto: true, req: true, ph: 'Escribe aquí' },
-    { id: 'referencia', t: 'Referencias', q: '¿Hay alguna web o app parecida?', s: 'Indica nombres o enlaces. Si no hay ninguna, escribe que no.', texto: true, req: true, ph: 'Escribe aquí' },
-    { id: 'sobria', t: 'Sobriedad', q: '¿Qué significa para ti «sobria»?', s: 'Elegiste una sensación sobria. Puedes elegir varias.', multi: true, op: [
-      { v: 'poco', l: 'Pocos colores', d: 'Mucho espacio vacío' },
-      { v: 'serio', l: 'Tono serio', d: 'Textos formales y claros' },
-      { v: 'discreta', l: 'Animaciones discretas', d: 'Nada llamativo' },
-      { v: 'oscura', l: 'Tonos oscuros', d: 'Fondos profundos' } ] },
-    { id: 'vibrante', t: 'Energía', q: '¿Dónde debe notarse la energía?', s: 'También elegiste vibrante y cálida. Puedes elegir varias.', multi: true, op: [
-      { v: 'acento', l: 'En el color de acento', d: 'Pequeños toques de color' },
-      { v: 'graficos', l: 'En gráficos y datos', d: 'Visualizaciones con vida' },
-      { v: 'animacion', l: 'En las animaciones', d: 'Movimiento fluido' },
-      { v: 'ilustracion', l: 'En las ilustraciones', d: 'Dibujos con carácter' },
-      { v: 'tono', l: 'En el tono de los textos', d: 'Un lenguaje cercano' } ] }
+  const PREGUNTAS = [
+    '¿Qué actividad de esta semana te hizo perder la noción del tiempo?',
+    '¿Qué hiciste esta semana que repetirías sin dudarlo?',
+    '¿Qué te quitó energía y no quieres volver a hacer?',
+    '¿Qué despertó tu curiosidad esta semana?',
+    '¿Con quién disfrutaste más y qué hacíais juntos?',
+    '¿Qué harías mañana si no tuvieras que justificarlo?',
+    '¿Qué te gustaría haber probado ya?',
+    '¿Qué estás evitando y por qué?'
   ];
-  ENL.forEach(function (p) { p.fase = 'enlace'; });
-  NUD.forEach(function (p) { p.fase = 'nudo'; });
-  NUD.forEach(function (p) { (p.op || []).forEach(function (o) { o.sw = o.sw || DEF; o.tx = o.tx || o.l.charAt(0); }); });
-  ENL.concat(NUD).forEach(function (p) { (p.op || []).forEach(function (o) { o.tg = o.tg || []; }); });
-  var LIST = { enlace: ENL, nudo: NUD }, NOM = { enlace: 'Enlace', nudo: 'Nudo' };
-  var fa = 'enlace', PREG = ENL;
+  const ESTADOS = [['probando', 'Probando'], ['por_probar', 'Por probar'], ['descartado', 'Descartado']];
+  const CATS = [['apasiona', 'Me apasiona', 'Algo que te llena'], ['no_gusta', 'No me gusta', 'Algo que te desgasta'], ['quiero', 'Quiero vivir', 'Una experiencia pendiente'], ['no_quiero', 'No quiero hacer', 'Algo que prefieres evitar']];
+  const PARADAS = new Set(['porque', 'aunque', 'cuando', 'donde', 'sobre', 'entre', 'hacer', 'estaba', 'tengo', 'tiene', 'había', 'pero', 'también', 'mucho', 'muchas', 'hacía', 'desde', 'hasta', 'todo', 'todos', 'estoy', 'hemos', 'estar', 'sido', 'algo', 'ahora', 'después', 'antes', 'durante', 'fueron', 'podría', 'aquí', 'este', 'esta', 'esto', 'estos', 'estas', 'para', 'como', 'unos', 'unas', 'poco', 'bastante']);
 
-  var R = {}, i = 0, fin = false, cargado = false;
-  var $ = function (s) { return document.querySelector(s); };
-
-  function estado(t) { $('#estado').textContent = t; }
-  function valores(p) { return (R[p.id] && R[p.id].valores) || []; }
-  function notaDe(p) { return (R[p.id] && R[p.id].nota) || ''; }
-  function respondida(p) { return !!R[p.id]; }
-  function completa(f) { return LIST[f].every(respondida); }
-  function primera(f) { var k = LIST[f].findIndex(function (p) { return !respondida(p); }); return k < 0 ? 0 : k; }
-  function buscar(p, v) { return (p.op || []).filter(function (x) { return x.v === v; })[0]; }
-  function etiq(p, v) { var o = buscar(p, v); return o ? o.l : v; }
-
-  function aplicar() {
-    var r = document.documentElement, c = {};
-    ENL.forEach(function (p) { valores(p).forEach(function (v) { var o = buscar(p, v); if (o && o.ap) Object.keys(o.ap).forEach(function (k) { c[k] = o.ap[k]; }); }); });
-    if (c.acento) { r.style.setProperty('--accent', c.acento[0]); r.style.setProperty('--accent2', c.acento[1]); }
-    if (c.tema) r.setAttribute('data-tema', c.tema);
-    if (c.sup) r.setAttribute('data-sup', c.sup);
-    if (c.radio != null) r.style.setProperty('--radio', c.radio + 'px');
-    if (c.gap != null) r.style.setProperty('--gap', c.gap + 'px');
-    if (c.fuente) r.style.setProperty('--fuente', c.fuente);
-    if (c.mov != null) r.style.setProperty('--mov', c.mov + 's');
+  async function api(met, tabla, q, cuerpo) {
+    const r = await fetch(BASE + tabla + (q ? '?' + q : ''), { method: met, headers: Object.assign({ Prefer: 'return=representation' }, H), body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+    if (!r.ok) throw new Error(String(r.status));
+    const t = await r.text();
+    return t ? JSON.parse(t) : [];
   }
 
-  function tendencias() {
-    var n = {};
-    ENL.concat(NUD).forEach(function (p) { valores(p).forEach(function (v) { var o = buscar(p, v); (o ? o.tg : []).forEach(function (t) { n[t] = (n[t] || 0) + 1; }); }); });
-    return Object.keys(n).sort(function (a, b) { return n[b] - n[a]; }).slice(0, 6).map(function (t) { return t.charAt(0).toUpperCase() + t.slice(1); });
+  async function cargar() {
+    cargando = true; fallo = false; pintar(false);
+    try {
+      const r = await Promise.all([
+        api('GET', 'iki_registros', 'select=*&order=fecha.desc,created_at.desc'),
+        api('GET', 'iki_intereses', 'select=*&order=created_at.asc'),
+        api('GET', 'iki_retrato', 'select=*&order=created_at.asc'),
+        api('GET', 'iki_respuestas', 'select=pregunta_id,etiquetas,fase')
+      ]);
+      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3];
+    } catch (e) { fallo = true; }
+    cargando = false; pintar(false);
   }
 
-  function pintarPerfil() {
-    var t = tendencias(), e = $('#perfil');
-    e.innerHTML = '<h3>Lo que voy detectando</h3>' + (t.length ? '<div class="chips">' + t.map(function (x) { return '<span class="chip">' + x + '</span>'; }).join('') + '</div>' : '<p class="vacio">Aún sin datos.</p>');
-  }
-
-  function pintarFases() {
-    $('#fases').innerHTML =
-      '<button type="button" class="fase' + (fa === 'enlace' ? ' actual' : '') + '" data-f="enlace">Enlace</button>' +
-      '<button type="button" class="fase' + (fa === 'nudo' ? ' actual' : '') + '" data-f="nudo"' + (completa('enlace') ? '' : ' disabled') + '>Nudo</button>' +
-      '<span class="fase bloq">Desenlace</span>';
-    document.querySelectorAll('#fases button').forEach(function (b) { b.addEventListener('click', function () { cambiarFase(b.getAttribute('data-f')); }); });
-  }
-
-  function cambiarFase(f) { if (f === fa) return; fa = f; PREG = LIST[f]; fin = false; i = primera(f); pintar(true); }
-
-  function guardar(p) {
-    var tg = [];
-    valores(p).forEach(function (x) { var o = buscar(p, x); if (o) tg = tg.concat(o.tg); });
+  async function guarda(fn, limpiar) {
     estado('Guardando');
-    fetch(SB + '?on_conflict=pregunta_id', { method: 'POST', headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, H), body: JSON.stringify({ pregunta_id: p.id, fase: p.fase, pregunta: p.q, valores: valores(p), etiquetas: tg, nota: notaDe(p) || null, actualizado_at: new Date().toISOString() }) })
-      .then(function (r) { estado(r.ok ? 'Guardado' : 'No se pudo guardar'); })
-      .catch(function () { estado('Sin conexión'); });
+    try { await fn(); estado('Guardado'); } catch (e) { estado('No se pudo guardar'); }
+    pintar(false, limpiar);
   }
 
-  function cargar() {
-    return fetch(SB + '?select=pregunta_id,valores,nota', { headers: H }).then(function (r) { return r.ok ? r.json() : []; }).then(function (f) {
-      f.forEach(function (x) { R[x.pregunta_id] = { valores: x.valores || [], nota: x.nota || '' }; });
-      fa = completa('enlace') ? 'nudo' : 'enlace'; PREG = LIST[fa];
-      if (completa(fa)) { fin = true; i = PREG.length - 1; } else i = primera(fa);
-    }).catch(function () {});
+  /* ---------- cálculos ---------- */
+  const regsDe = (id) => S.registros.filter((r) => r.interes_id === id);
+  const puntua = (rs) => media(rs.map((r) => (r.energia + r.ilusion) / 2));
+  function racha() {
+    const sem = new Set(S.registros.map((r) => lunes(r.fecha)));
+    let c = lunes(hoy()), n = 0;
+    if (!sem.has(c)) c = suma(c, -7);
+    while (sem.has(c)) { n++; c = suma(c, -7); }
+    return n;
   }
-
-  function textoActual() { var n = $('#nota'); return n ? n.value : null; }
-
-  function elegir(p, v) {
-    var a = valores(p).slice(), k = a.indexOf(v), t = textoActual();
-    if (p.multi) { if (k >= 0) a.splice(k, 1); else a.push(v); } else a = [v];
-    R[p.id] = { valores: a, nota: t !== null ? t : notaDe(p) };
-    aplicar(); guardar(p); pintar(false);
-    if (!p.multi && !p.nota && !p.texto) setTimeout(function () { if (PREG[i] === p) siguiente(); }, 420);
+  function ranking() {
+    return S.intereses.map((i) => ({ nombre: i.nombre, n: regsDe(i.id).length, v: puntua(regsDe(i.id)) })).filter((x) => x.n > 0).sort((a, b) => b.v - a.v);
   }
-
-  function guardarTexto(p) { var t = textoActual(); if (t === null) return; R[p.id] = { valores: valores(p), nota: t }; guardar(p); }
-  function siguiente() { if (i < PREG.length - 1) i++; else fin = true; pintar(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-  function anterior() { if (fin) { fin = false; i = PREG.length - 1; } else if (i > 0) i--; pintar(true); }
-
-  function resumenFila(q) {
-    var a = valores(q).map(function (x) { return etiq(q, x); }), n = notaDe(q).trim();
-    if (n) a.push(n.length > 90 ? n.slice(0, 90) + '...' : n);
-    return '<div class="fila"><span>' + q.t + '</span><b>' + (a.length ? a.join(', ') : 'Sin responder') + '</b></div>';
-  }
-
-  function pintar(anim) {
-    var v = $('#vista'), p = PREG[i], pct, sa = anim ? '' : 'animation:none';
-    pintarFases();
-    if (fin) {
-      pct = 100; $('#cont').textContent = NOM[fa] + ' completado';
-      var intro = fa === 'enlace' ? 'La aplicación ya se ha adaptado a lo que has elegido.' : 'Con estos datos, la fase de desenlace interconectará todas tus respuestas para encontrar coincidencias y patrones.';
-      v.innerHTML = '<div class="tarjeta" style="' + sa + '"><div class="etq">' + NOM[fa] + ' completado</div><h2>' + (fa === 'enlace' ? 'Perfil completo' : 'Propósito definido') + '</h2><p class="sub">' + intro + '</p>' +
-        PREG.filter(function (q) { return q.op || q.texto; }).filter(function (q) { return q.id !== 'nota'; }).map(resumenFila).join('') +
-        '<div class="acciones"><button class="btn" id="ant" type="button">Revisar respuestas</button></div></div>';
-    } else {
-      pct = Math.round(i / PREG.length * 100); $('#cont').textContent = NOM[fa] + ' · Pregunta ' + (i + 1) + ' de ' + PREG.length;
-      var h = '<div class="tarjeta" style="' + sa + '"><div class="etq">' + p.t + '</div><h2>' + p.q + '</h2><p class="sub">' + p.s + '</p>';
-      if (p.op) h += '<div class="ops">' + p.op.map(function (o) { var on = valores(p).indexOf(o.v) >= 0; return '<button type="button" class="op' + (on ? ' elegida' : '') + '" role="' + (p.multi ? 'checkbox' : 'radio') + '" aria-checked="' + on + '" data-v="' + o.v + '"><span class="sw" style="' + o.sw + '">' + (o.tx || '') + '</span><span><b>' + o.l + '</b><small>' + o.d + '</small></span></button>'; }).join('') + '</div>';
-      if (p.texto || p.nota) h += '<textarea id="nota" class="' + (p.texto ? '' : 'corta') + '" placeholder="' + (p.ph || 'Escribe aquí') + '"></textarea>';
-      var ok = p.texto ? (!p.req || notaDe(p).trim().length > 2) : valores(p).length > 0;
-      h += '<div class="acciones">' + (i > 0 ? '<button class="btn" id="ant" type="button">Anterior</button>' : '') + '<button class="btn pri" id="sig" type="button"' + (ok ? '' : ' disabled') + '>' + (i === PREG.length - 1 ? 'Finalizar' : 'Continuar') + '</button></div></div>';
-      v.innerHTML = h;
-      var n = $('#nota');
-      if (n) {
-        n.value = notaDe(p);
-        n.addEventListener('input', function () { if (p.texto && p.req) $('#sig').disabled = n.value.trim().length <= 2; });
-        n.addEventListener('change', function () { guardarTexto(p); });
-      }
+  function serie(n) {
+    const lun = lunes(hoy()), out = [];
+    for (let k = n - 1; k >= 0; k--) {
+      const c = suma(lun, -7 * k), rs = S.registros.filter((r) => lunes(r.fecha) === c);
+      out.push({ c: c, e: media(rs.map((r) => r.energia)), i: media(rs.map((r) => r.ilusion)), n: rs.length });
     }
-    $('#rel').style.width = pct + '%';
-    var a = $('#ant'); if (a) a.addEventListener('click', anterior);
-    var s = $('#sig'); if (s) s.addEventListener('click', function () { guardarTexto(p); siguiente(); });
-    document.querySelectorAll('.op').forEach(function (b) { b.addEventListener('click', function () { elegir(p, b.getAttribute('data-v')); }); });
-    pintarPerfil();
+    return out;
+  }
+  function palabras() {
+    const n = {};
+    S.registros.forEach((r) => ((r.titulo || '') + ' ' + (r.texto || '')).toLowerCase().split(/[^a-záéíóúñü]+/).forEach((w) => { if (w.length >= 5 && !PARADAS.has(w)) n[w] = (n[w] || 0) + 1; }));
+    return Object.keys(n).filter((w) => n[w] >= 2).sort((a, b) => n[b] - n[a]).slice(0, 8).map(mayus);
+  }
+  function etiquetas() {
+    const n = {};
+    S.resp.forEach((r) => (r.etiquetas || []).forEach((t) => { n[t] = (n[t] || 0) + 1; }));
+    return Object.keys(n).sort((a, b) => n[b] - n[a]).slice(0, 6).map(mayus);
+  }
+  function lecturas() {
+    const out = [], rk = ranking(), s = serie(8).filter((x) => x.n > 0);
+    if (S.registros.length < 3) return ['Con tres registros empezaré a detectar patrones. Ahora hay ' + S.registros.length + '.'];
+    if (rk[0]) out.push('La actividad que más te llena hasta ahora es ' + rk[0].nombre + ', con una puntuación media de ' + num(rk[0].v) + ' sobre 10.');
+    const bajos = S.registros.filter((r) => r.energia <= 4 && r.ilusion <= 4);
+    if (bajos.length) out.push('Hay ' + bajos.length + (bajos.length === 1 ? ' registro' : ' registros') + ' con poca energía y poca ilusión. Son candidatos a descartar.');
+    if (s.length >= 2) {
+      const a = s[s.length - 1], b = s[s.length - 2], d = a.e - b.e;
+      out.push(Math.abs(d) < 0.3 ? 'Tu energía se mantiene estable respecto a la semana anterior.' : 'Tu energía ' + (d > 0 ? 'sube' : 'baja') + ' ' + num(Math.abs(d)) + ' puntos respecto a la semana anterior.');
+    }
+    const alto = S.registros.filter((r) => r.energia >= 8 && r.ilusion >= 8).length;
+    if (alto) out.push('Tienes ' + alto + (alto === 1 ? ' momento' : ' momentos') + ' en la zona de pasión, con energía e ilusión de 8 o más.');
+    return out;
   }
 
-  window.IKI = { ir: function (n, f) { if (f) { fa = f; PREG = LIST[f]; } fin = n >= PREG.length; i = Math.min(n, PREG.length - 1); pintar(false); } };
-  cargar().then(function () { cargado = true; aplicar(); pintar(false); });
-  setTimeout(function () { if (!cargado) pintar(false); }, 2500);
+  /* ---------- gráficos ---------- */
+  function anillo(v, nombre, id) {
+    const C = 2 * Math.PI * 36, off = v == null ? C : C * (1 - v / 10);
+    return '<div class="kpi"><svg viewBox="0 0 88 88" width="88" height="88" role="img" aria-label="' + nombre + '"><defs><linearGradient id="g' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--accent2)"/></linearGradient></defs><circle cx="44" cy="44" r="36" fill="none" stroke-width="8" style="stroke:var(--borde)"/><circle class="anillo" cx="44" cy="44" r="36" fill="none" stroke-width="8" stroke-linecap="round" transform="rotate(-90 44 44)" stroke="url(#g' + id + ')" style="--c:' + C.toFixed(1) + ';stroke-dasharray:' + C.toFixed(1) + ';stroke-dashoffset:' + off.toFixed(1) + '"/><text x="44" y="51" text-anchor="middle" class="num">' + (v == null ? '-' : num(v)) + '</text></svg><small>' + nombre + '</small></div>';
+  }
+  function grafLineas() {
+    const n = 8, x0 = 28, x1 = 282, y0 = 12, y1 = 140, ser = serie(n);
+    const px = (k) => x0 + (x1 - x0) * k / (n - 1), py = (v) => y1 - (y1 - y0) * v / 10;
+    const camino = (c) => { let d = '', ant = false; ser.forEach((s, k) => { if (s[c] == null) { ant = false; return; } d += (ant ? 'L' : 'M') + px(k).toFixed(1) + ' ' + py(s[c]).toFixed(1); ant = true; }); return d; };
+    let g = '';
+    [0, 5, 10].forEach((v) => { g += '<line class="rej" x1="' + x0 + '" x2="' + x1 + '" y1="' + py(v) + '" y2="' + py(v) + '"/><text class="eje" x="20" y="' + (py(v) + 3) + '" text-anchor="end">' + v + '</text>'; });
+    ser.forEach((s, k) => { if (k % 2 === 1 || k === n - 1) g += '<text class="eje" x="' + px(k).toFixed(1) + '" y="160" text-anchor="middle">' + corta(s.c) + '</text>'; });
+    [['e', 'var(--accent)'], ['i', 'var(--accent2)']].forEach((p) => {
+      g += '<path class="linea" pathLength="1" d="' + camino(p[0]) + '" style="stroke:' + p[1] + '"/>';
+      ser.forEach((s, k) => { if (s[p[0]] != null) g += '<circle cx="' + px(k).toFixed(1) + '" cy="' + py(s[p[0]]).toFixed(1) + '" r="3.5" style="fill:' + p[1] + '"/>'; });
+    });
+    return '<svg viewBox="0 0 300 170" role="img" aria-label="Evolución semanal de energía e ilusión">' + g + '</svg>';
+  }
+  function grafPuntos() {
+    const x0 = 28, x1 = 284, y0 = 10, y1 = 196, px = (v) => x0 + (x1 - x0) * (v - 1) / 9, py = (v) => y1 - (y1 - y0) * (v - 1) / 9;
+    let g = '<line class="rej" x1="' + px(5.5) + '" x2="' + px(5.5) + '" y1="' + y0 + '" y2="' + y1 + '"/><line class="rej" x1="' + x0 + '" x2="' + x1 + '" y1="' + py(5.5) + '" y2="' + py(5.5) + '"/>';
+    g += '<text class="eje" x="' + (x1 - 2) + '" y="' + (y0 + 10) + '" text-anchor="end">Zona de pasión</text><text class="eje" x="' + x0 + '" y="212">Energía</text><text class="eje" x="' + (x0 + 4) + '" y="' + (y0 + 10) + '">Ilusión</text>';
+    S.registros.slice(0, 80).forEach((r) => { g += '<circle cx="' + px(r.energia).toFixed(1) + '" cy="' + py(r.ilusion).toFixed(1) + '" r="5" style="fill:var(--accent);fill-opacity:.7"/>'; });
+    return '<svg viewBox="0 0 300 220" role="img" aria-label="Energía frente a ilusión de cada registro">' + g + '</svg>';
+  }
+
+  /* ---------- vistas ---------- */
+  function vInicio() {
+    const h = hoy(), desde = suma(h, -6), sem = S.registros.filter((r) => r.fecha >= desde && r.fecha <= h);
+    const e = media(sem.map((r) => r.energia)), i = media(sem.map((r) => r.ilusion));
+    const mejor = sem.slice().sort((a, b) => (b.energia + b.ilusion) - (a.energia + a.ilusion))[0];
+    const rc = racha(), preg = PREGUNTAS[Math.floor(aFecha(h).getTime() / 604800000) % PREGUNTAS.length];
+    let t = '<div class="tarjeta"><div class="etq">Tu semana</div><h2>Así va tu semana</h2><p class="sub">Del ' + corta(desde) + ' al ' + corta(h) + '</p>';
+    t += sem.length ? '<div class="kpis">' + anillo(e, 'Energía media', 'e') + anillo(i, 'Ilusión media', 'i') + '</div>' : '<p class="vacio">Aún no has registrado nada esta semana.</p><div class="acciones"><button class="btn pri" data-ir="registro">Hacer un registro</button></div>';
+    t += '</div>';
+    if (mejor) t += '<div class="tarjeta"><div class="etq">Lo mejor</div><h3>Lo que más te llenó</h3><div class="item"><div class="cab"><b>' + esc(mejor.titulo) + '</b><small>' + corta(mejor.fecha) + '</small></div><div class="chips"><span class="chip">Energía ' + mejor.energia + '</span><span class="chip">Ilusión ' + mejor.ilusion + '</span></div></div></div>';
+    t += '<div class="tarjeta"><div class="etq">Constancia</div><div class="grande">' + rc + (rc === 1 ? ' semana' : ' semanas') + '</div><p class="sub">' + (rc ? 'Seguidas con algún registro.' : 'Empieza hoy tu primera semana.') + '</p></div>';
+    t += '<div class="tarjeta"><div class="etq">Para reflexionar</div><h3>' + preg + '</h3><p class="vacio">Puedes responderla en tu próximo registro.</p></div>';
+    return t;
+  }
+  function vRegistro() {
+    const opts = '<option value="">Ninguno</option>' + S.intereses.map((i) => '<option value="' + i.id + '">' + esc(i.nombre) + '</option>').join('');
+    let t = '<div class="tarjeta"><div class="etq">Registro</div><h2>Nuevo registro</h2><p class="sub">Apunta qué hiciste y cómo te sentiste.</p>' +
+      '<label for="r-fecha">Fecha</label><input id="r-fecha" type="date" value="' + hoy() + '">' +
+      '<label for="r-titulo">Qué hiciste</label><input id="r-titulo" type="text" maxlength="80" placeholder="Escribe aquí">' +
+      '<label for="r-interes">Interés relacionado</label><select id="r-interes">' + opts + '</select>' +
+      '<div class="nivel"><label for="r-energia">Energía</label><b id="o-energia">6</b></div><input id="r-energia" type="range" min="1" max="10" value="6">' +
+      '<div class="nivel"><label for="r-ilusion">Ilusión</label><b id="o-ilusion">6</b></div><input id="r-ilusion" type="range" min="1" max="10" value="6">' +
+      '<label for="r-texto">Notas</label><textarea id="r-texto" placeholder="Qué descubriste o qué sentiste"></textarea>' +
+      '<label for="r-enlace">Enlace o referencia</label><input id="r-enlace" type="url" placeholder="Opcional">' +
+      '<div class="acciones"><button class="btn pri" data-act="guardar-registro">Guardar registro</button></div></div>';
+    t += '<div class="tarjeta"><div class="etq">Historial</div><h3>Tus registros</h3>';
+    if (!S.registros.length) t += '<p class="vacio">Todavía no hay registros.</p>';
+    S.registros.slice(0, 40).forEach((r) => {
+      const it = S.intereses.filter((x) => x.id === r.interes_id)[0], url = /^https?:\/\//i.test(r.enlace || '') ? esc(r.enlace) : '';
+      t += '<div class="item"><div class="cab"><b>' + esc(r.titulo) + '</b><small>' + corta(r.fecha) + '</small></div><div class="chips"><span class="chip">Energía ' + r.energia + '</span><span class="chip">Ilusión ' + r.ilusion + '</span>' + (it ? '<span class="chip">' + esc(it.nombre) + '</span>' : '') + '</div>' +
+        (r.texto ? '<p>' + esc(r.texto) + '</p>' : '') + (url ? '<a href="' + url + '" target="_blank" rel="noopener noreferrer">Ver enlace</a>' : '') +
+        '<div class="acciones" style="margin-top:2px"><button class="mini" data-act="eliminar-registro" data-id="' + r.id + '">Eliminar</button></div></div>';
+    });
+    return t + '</div>';
+  }
+  function vExplorar() {
+    let t = '<div class="tarjeta"><div class="etq">Explorar</div><h2>Tus intereses</h2><p class="sub">Todo lo que te atrae o estás probando.</p><div class="add"><input id="e-nombre" type="text" maxlength="60" placeholder="Un interés nuevo"><button class="mini" data-act="add-interes">Añadir</button></div></div>';
+    if (!S.intereses.length) t += '<div class="tarjeta"><p class="vacio">Aún no has añadido ningún interés.</p></div>';
+    ESTADOS.forEach((es) => {
+      const l = S.intereses.filter((i) => i.estado === es[0]);
+      if (!l.length) return;
+      t += '<div class="tarjeta"><h3>' + es[1] + '</h3>';
+      l.forEach((i) => {
+        const rs = regsDe(i.id), sc = puntua(rs);
+        t += '<div class="item"><div class="cab"><b>' + esc(i.nombre) + '</b><small>' + (rs.length ? rs.length + (rs.length === 1 ? ' registro' : ' registros') : 'Sin registros') + '</small></div>' +
+          (sc != null ? '<div class="barra-r"><i style="width:' + sc * 10 + '%"></i></div><small>Puntuación media ' + num(sc) + ' sobre 10</small>' : '') +
+          '<div class="seg">' + ESTADOS.map((x) => '<button class="' + (x[0] === i.estado ? 'elegida' : '') + '" data-act="estado-interes" data-id="' + i.id + '" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+          '<div class="acciones" style="margin-top:2px"><button class="mini" data-act="eliminar-interes" data-id="' + i.id + '">Eliminar</button></div></div>';
+      });
+      t += '</div>';
+    });
+    return t;
+  }
+  function vPatrones() {
+    const rk = ranking().slice(0, 5), pa = palabras(), et = etiquetas(), le = lecturas();
+    let t = '<div class="tarjeta"><div class="etq">Patrones</div><h2>Lo que detecto</h2><div class="lectura" style="margin-top:12px">' + le.map((x) => '<p>' + esc(x) + '</p>').join('') + '</div></div>';
+    t += '<div class="tarjeta grafico"><h3>Evolución semanal</h3><div class="chips" style="margin-bottom:8px"><span class="chip"><span class="punto" style="background:var(--accent)"></span>Energía</span><span class="chip"><span class="punto" style="background:var(--accent2)"></span>Ilusión</span></div>' + grafLineas() + '</div>';
+    t += '<div class="tarjeta"><h3>Lo que más te llena</h3>' + (rk.length ? rk.map((x) => '<div class="rank"><div class="tx"><span>' + esc(x.nombre) + '</span><b>' + num(x.v) + '</b></div><div class="barra-r"><i style="width:' + x.v * 10 + '%"></i></div></div>').join('') : '<p class="vacio">Asocia registros a un interés para ver el ranking.</p>') + '</div>';
+    t += '<div class="tarjeta grafico"><h3>Energía frente a ilusión</h3>' + (S.registros.length ? grafPuntos() : '<p class="vacio">Aún sin datos.</p>') + '</div>';
+    t += '<div class="tarjeta"><h3>Palabras que se repiten</h3>' + (pa.length ? '<div class="chips">' + pa.map((w) => '<span class="chip">' + esc(w) + '</span>').join('') + '</div>' : '<p class="vacio">Aparecerán cuando una palabra se repita en tus textos.</p>') + '</div>';
+    t += '<div class="tarjeta"><h3>Tu perfil base</h3>' + (et.length ? '<div class="chips">' + et.map((w) => '<span class="chip">' + esc(w) + '</span>').join('') + '</div>' : '<p class="vacio">Aún sin datos.</p>') + '</div>';
+    return t;
+  }
+  function vRetrato() {
+    const ap = ranking().filter((x) => x.n >= 2 && x.v >= 7).slice(0, 3);
+    let t = '<div class="tarjeta"><div class="etq">Retrato</div><h2>Tu retrato</h2><p class="sub">Se construye con lo que registras y con lo que escribes aquí.</p><h3>Lo que parece apasionarte</h3>' +
+      (ap.length ? '<div class="chips">' + ap.map((x) => '<span class="chip">' + esc(x.nombre) + '</span>').join('') + '</div>' : '<p class="vacio">Necesito al menos dos registros muy valorados de un mismo interés.</p>') + '</div>';
+    CATS.forEach((c) => {
+      const l = S.retrato.filter((x) => x.categoria === c[0]);
+      t += '<div class="tarjeta"><h3>' + c[1] + '</h3>';
+      if (!l.length) t += '<p class="vacio">Aún no has añadido nada.</p>';
+      l.forEach((x) => { t += '<div class="fila"><span>' + esc(x.texto) + '</span><span class="bt">' + (c[0] === 'quiero' ? '<button class="mini' + (x.hecho ? ' elegida' : '') + '" data-act="hecho" data-id="' + x.id + '">Hecho</button>' : '') + '<button class="mini" data-act="quitar" data-id="' + x.id + '">Quitar</button></span></div>'; });
+      t += '<div class="add"><input id="c-' + c[0] + '" type="text" maxlength="100" placeholder="' + c[2] + '"><button class="mini" data-act="add-retrato" data-cat="' + c[0] + '">Añadir</button></div></div>';
+    });
+    t += '<div class="tarjeta"><h3>Perfil base</h3><p class="sub">Tus respuestas de enlace y nudo siguen guardadas y alimentan los patrones.</p><div class="acciones" style="margin-top:0"><a class="btn" href="perfil.html">Revisar mi perfil base</a></div></div>';
+    return t;
+  }
+  const VISTAS = { inicio: vInicio, registro: vRegistro, explorar: vExplorar, patrones: vPatrones, retrato: vRetrato };
+
+  function pintar(anim, limpiar) {
+    const cont = $('#pantalla'), guardado = {};
+    cont.querySelectorAll('input[id],textarea[id],select[id]').forEach((e) => { guardado[e.id] = e.value; });
+    $('#nav').innerHTML = NAV.map((n) => '<button type="button" class="' + (n[0] === vista ? 'actual' : '') + '" data-ir="' + n[0] + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + n[2] + '</svg>' + n[1] + '</button>').join('');
+    let h = '';
+    if (cargando) h = '<div class="tarjeta"><p class="vacio">Cargando tus datos.</p></div>';
+    else {
+      if (fallo) h += '<div class="tarjeta"><h3>Sin conexión</h3><p class="sub">No he podido cargar tus datos.</p><div class="acciones" style="margin-top:0"><button class="btn" data-act="recargar">Reintentar</button></div></div>';
+      h += VISTAS[vista]();
+    }
+    cont.innerHTML = '<div class="pantalla" style="' + (anim ? '' : 'animation:none') + '">' + h + '</div>';
+    Object.keys(guardado).forEach((id) => { const e = document.getElementById(id); if (e && !(limpiar || []).includes(id)) { e.value = guardado[id]; if (e.type === 'range') { const o = $('#o-' + id.slice(2)); if (o) o.textContent = e.value; } } });
+  }
+
+  /* ---------- acciones ---------- */
+  const val = (id) => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const ACC = {
+    'guardar-registro': () => {
+      const titulo = val('r-titulo');
+      if (!titulo) { estado('Escribe qué hiciste'); return; }
+      const o = { fecha: val('r-fecha') || hoy(), titulo: titulo, texto: val('r-texto') || null, energia: +val('r-energia'), ilusion: +val('r-ilusion'), interes_id: val('r-interes') || null, enlace: val('r-enlace') || null };
+      guarda(async () => { const r = await api('POST', 'iki_registros', '', o); S.registros.unshift(r[0]); S.registros.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0)); }, ['r-titulo', 'r-texto', 'r-enlace']);
+    },
+    'eliminar-registro': (b) => { if (confirm('¿Eliminar este registro?')) guarda(async () => { await api('DELETE', 'iki_registros', 'id=eq.' + b.dataset.id); S.registros = S.registros.filter((x) => x.id !== b.dataset.id); }); },
+    'add-interes': () => {
+      const n = val('e-nombre'); if (!n) { estado('Escribe el interés'); return; }
+      guarda(async () => { const r = await api('POST', 'iki_intereses', '', { nombre: n }); S.intereses.push(r[0]); }, ['e-nombre']);
+    },
+    'estado-interes': (b) => guarda(async () => { const r = await api('PATCH', 'iki_intereses', 'id=eq.' + b.dataset.id, { estado: b.dataset.v }); S.intereses = S.intereses.map((x) => (x.id === b.dataset.id ? r[0] : x)); }),
+    'eliminar-interes': (b) => { if (confirm('¿Eliminar este interés? Sus registros se conservan.')) guarda(async () => { await api('DELETE', 'iki_intereses', 'id=eq.' + b.dataset.id); S.intereses = S.intereses.filter((x) => x.id !== b.dataset.id); S.registros.forEach((r) => { if (r.interes_id === b.dataset.id) r.interes_id = null; }); }); },
+    'add-retrato': (b) => {
+      const id = 'c-' + b.dataset.cat, t = val(id); if (!t) { estado('Escribe algo primero'); return; }
+      guarda(async () => { const r = await api('POST', 'iki_retrato', '', { categoria: b.dataset.cat, texto: t }); S.retrato.push(r[0]); }, [id]);
+    },
+    'hecho': (b) => guarda(async () => { const x = S.retrato.filter((y) => y.id === b.dataset.id)[0]; const r = await api('PATCH', 'iki_retrato', 'id=eq.' + x.id, { hecho: !x.hecho }); S.retrato = S.retrato.map((y) => (y.id === x.id ? r[0] : y)); }),
+    'quitar': (b) => guarda(async () => { await api('DELETE', 'iki_retrato', 'id=eq.' + b.dataset.id); S.retrato = S.retrato.filter((x) => x.id !== b.dataset.id); }),
+    'recargar': () => cargar()
+  };
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-act],[data-ir]');
+    if (!b) return;
+    if (b.dataset.ir) { vista = b.dataset.ir; pintar(true); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (ACC[b.dataset.act]) ACC[b.dataset.act](b);
+  });
+  document.addEventListener('input', (ev) => {
+    const t = ev.target;
+    if (t.type === 'range') { const o = $('#o-' + t.id.slice(2)); if (o) o.textContent = t.value; }
+  });
+
+  /* ---------- enlace para la auditoría de pantallas (no se usa en producción) ---------- */
+  window.IKI = {
+    ir: (v) => { vista = v; cargando = false; fallo = false; pintar(false); },
+    prueba: () => {
+      const h = hoy(), f = (n) => suma(h, -n);
+      S.intereses = [{ id: 'a', nombre: 'Programación', estado: 'probando' }, { id: 'b', nombre: 'Deporte al aire libre', estado: 'probando' }, { id: 'c', nombre: 'Lectura', estado: 'por_probar' }, { id: 'd', nombre: 'Pintura', estado: 'descartado' }];
+      const d = [[0, 'Proyecto de código', 9, 9, 'a'], [1, 'Paseo largo', 7, 8, 'b'], [3, 'Lectura nocturna', 5, 6, 'c'], [5, 'Proyecto de código', 8, 9, 'a'], [8, 'Clase de pintura', 3, 3, 'd'], [10, 'Salida en bicicleta', 8, 7, 'b'], [13, 'Proyecto de código', 9, 8, 'a'], [16, 'Lectura de ensayo', 6, 6, 'c'], [20, 'Clase de pintura', 4, 3, 'd'], [24, 'Proyecto de código', 8, 9, 'a']];
+      S.registros = d.map((x, k) => ({ id: 'r' + k, fecha: f(x[0]), titulo: x[1], texto: x[0] % 2 ? 'Me concentré durante horas y aprendí algo nuevo' : null, energia: x[2], ilusion: x[3], interes_id: x[4], enlace: null }));
+      S.retrato = [{ id: 't1', categoria: 'apasiona', texto: 'Crear objetos con las manos', hecho: false }, { id: 't2', categoria: 'quiero', texto: 'Viajar solo durante un mes', hecho: false }, { id: 't3', categoria: 'quiero', texto: 'Terminar un proyecto propio', hecho: true }, { id: 't4', categoria: 'no_quiero', texto: 'Trabajos sin autonomía', hecho: false }];
+      S.resp = [{ pregunta_id: 'x', etiquetas: ['moderno', 'técnico', 'sobrio', 'moderno'], fase: 'enlace' }];
+      cargando = false; fallo = false; pintar(false);
+    }
+  };
+  cargar();
 })();
 </script>
 </body>
