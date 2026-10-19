@@ -101,7 +101,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.07</span><button class="mini" data-act="salir">Salir</button></div></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.08</span><button class="mini" data-act="salir">Salir</button></div></div>
   <div id="pantalla"></div>
 </div>
 <nav class="nav"><div class="nav-in" id="nav"></div></nav>
@@ -111,7 +111,7 @@
   'use strict';
   const BASE = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/';
 
-  const S = { registros: [], intereses: [], retrato: [], resp: [] };
+  const S = { registros: [], intereses: [], retrato: [], resp: [], pistas: [] };
   let vista = 'inicio', cargando = true, fallo = false;
 
   const $ = (s) => document.querySelector(s);
@@ -166,9 +166,10 @@
         api('GET', 'iki_registros', 'select=*&order=fecha.desc,created_at.desc'),
         api('GET', 'iki_intereses', 'select=*&order=created_at.asc'),
         api('GET', 'iki_retrato', 'select=*&order=created_at.asc'),
-        api('GET', 'iki_respuestas', 'select=pregunta_id,etiquetas,fase')
+        api('GET', 'iki_respuestas', 'select=pregunta_id,etiquetas,fase'),
+        api('GET', 'iki_pistas', 'select=*&order=created_at.asc')
       ]);
-      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3];
+      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3]; S.pistas = r[4];
     } catch (e) { fallo = true; }
     cargando = false; pintar(false);
   }
@@ -314,10 +315,20 @@
     t += '<div class="tarjeta"><h3>Tu perfil base</h3>' + (et.length ? '<div class="chips">' + et.map((w) => '<span class="chip">' + esc(w) + '</span>').join('') + '</div>' : '<p class="vacio">Aún sin datos.</p>') + '</div>';
     return t;
   }
+  function pistasHtml() {
+    const l = S.pistas || [];
+    let t = '<div class="tarjeta"><div class="etq">Descubrimientos</div><h3>Lo que llevo descubierto</h3><p class="sub">Son hipótesis a partir de lo que me has contado. Dime si te reconoces.</p>';
+    if (!l.length) t += '<p class="vacio">Aún no hay pistas. Aparecerán según avance la entrevista.</p>';
+    l.forEach((x) => {
+      t += '<div class="item"><b>' + esc(x.texto) + '</b>' + (x.evidencia ? '<p>' + esc(x.evidencia) + '</p>' : '') + '<div class="seg">' + [['me_reconozco', 'Me reconozco'], ['no_exactamente', 'No exactamente']].map((o) => '<button class="' + (x.valoracion === o[0] ? 'elegida' : '') + '" data-act="valorar-pista" data-id="' + x.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div></div>';
+    });
+    return t + '</div>';
+  }
   function vRetrato() {
     const ap = ranking().filter((x) => x.n >= 2 && x.v >= 7).slice(0, 3);
     let t = '<div class="tarjeta"><div class="etq">Retrato</div><h2>Tu retrato</h2><p class="sub">Se construye con lo que registras y con lo que escribes aquí.</p><h3>Lo que parece apasionarte</h3>' +
       (ap.length ? '<div class="chips">' + ap.map((x) => '<span class="chip">' + esc(x.nombre) + '</span>').join('') + '</div>' : '<p class="vacio">Necesito al menos dos registros muy valorados de un mismo interés.</p>') + '</div>';
+    t += pistasHtml();
     CATS.forEach((c) => {
       const l = S.retrato.filter((x) => x.categoria === c[0]);
       t += '<div class="tarjeta"><h3>' + c[1] + '</h3>';
@@ -367,6 +378,7 @@
     },
     'hecho': (b) => guarda(async () => { const x = S.retrato.filter((y) => y.id === b.dataset.id)[0]; const r = await api('PATCH', 'iki_retrato', 'id=eq.' + x.id, { hecho: !x.hecho }); S.retrato = S.retrato.map((y) => (y.id === x.id ? r[0] : y)); }),
     'quitar': (b) => guarda(async () => { await api('DELETE', 'iki_retrato', 'id=eq.' + b.dataset.id); S.retrato = S.retrato.filter((x) => x.id !== b.dataset.id); }),
+    'valorar-pista': (b) => guarda(async () => { const x = S.pistas.filter((y) => y.id === b.dataset.id)[0]; const v = x.valoracion === b.dataset.v ? null : b.dataset.v; const r = await api('PATCH', 'iki_pistas', 'id=eq.' + x.id, { valoracion: v }); S.pistas = S.pistas.map((y) => (y.id === x.id ? r[0] : y)); }),
     'recargar': () => cargar(),
     'salir': () => IKIAuth.salir(),
     'cambiar-pass': () => {
@@ -397,6 +409,7 @@
       S.registros = d.map((x, k) => ({ id: 'r' + k, fecha: f(x[0]), titulo: x[1], texto: x[0] % 2 ? 'Me concentré durante horas y aprendí algo nuevo' : null, energia: x[2], ilusion: x[3], interes_id: x[4], enlace: null }));
       S.retrato = [{ id: 't1', categoria: 'apasiona', texto: 'Crear objetos con las manos', hecho: false }, { id: 't2', categoria: 'quiero', texto: 'Viajar solo durante un mes', hecho: false }, { id: 't3', categoria: 'quiero', texto: 'Terminar un proyecto propio', hecho: true }, { id: 't4', categoria: 'no_quiero', texto: 'Trabajos sin autonomía', hecho: false }];
       S.resp = [{ pregunta_id: 'x', etiquetas: ['moderno', 'técnico', 'sobrio', 'moderno'], fase: 'enlace' }];
+      S.pistas = [{ id: 'p1', texto: 'Buscas un estado de concentración y calma más que un resultado.', evidencia: 'Al dibujar buscabas concentración, tranquilidad y pasar el rato.', valoracion: 'me_reconozco' }, { id: 'p2', texto: 'Las historias y los mundos son un hilo común en lo que te atrae.', evidencia: 'Disfrutas de la historia y de explorar mundos en los videojuegos.', valoracion: null }];
       cargando = false; fallo = false; pintar(false);
     }
   };
