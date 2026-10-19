@@ -16,6 +16,7 @@ PUERTO = 8768
 # Cada vista es un trozo de JS que la abre (clic en su botón, cambio de hash, etc.).
 PAGINA = f'http://localhost:{PUERTO}/index.html'
 VISTAS = {
+    'acceso': "window.IKIAuth.mostrar()",
     'inicio_vacio': "window.IKI.ir('inicio')",
     'inicio': "window.IKI.prueba(); window.IKI.ir('inicio'); window.IKI.prueba()",
     'registro': "window.IKI.prueba(); window.IKI.ir('registro')",
@@ -26,7 +27,7 @@ VISTAS = {
     'perfil_nudo': "@perfil window.IKI.ir(0,'nudo')",
 }
 # AJUSTAR: si la web necesita sesión, inyectarla aquí (localStorage, cookie...). Nunca guardar secretos en el repo.
-INICIO_SESION_JS = ""
+INICIO_SESION_JS = "window.__IKI_PRUEBA = true;"
 ESPERA_MS = 8000
 
 class Q(http.server.SimpleHTTPRequestHandler):
