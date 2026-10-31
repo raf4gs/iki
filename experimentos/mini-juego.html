@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini-juego de partida</title>
+<style>
+  body { margin: 0; padding: 16px; background: #0b0b12; color: #f4f4fa; font-family: system-ui, sans-serif; text-align: center; }
+  canvas { background: #14141f; border: 2px solid #2f7bff; border-radius: 12px; max-width: 100%; touch-action: none; }
+  p { color: #a4a7bf; max-width: 480px; margin: 8px auto; }
+</style>
+</head>
+<body>
+<h1 id="titulo"></h1>
+<p id="historia"></p>
+<canvas id="c" width="480" height="320"></canvas>
+<p id="info">Muévete con las flechas o con WASD. Pulsa Enter para empezar.</p>
+<script>
+/* ---------- EDITA AQUÍ: la historia y las reglas ---------- */
+const TITULO = 'Mi mini-juego';
+const HEROE = 'Una exploradora';
+const MISION = 'Recoge las esferas de energía antes de que te alcancen los enemigos.';
+const VELOCIDAD_HEROE = 3;
+const NUM_ENEMIGOS = 3;
+const VELOCIDAD_ENEMIGOS = 1.6;
+const COLOR_HEROE = '#22d3ee';
+const COLOR_ESFERA = '#f5c400';
+const COLOR_ENEMIGO = '#ff5a4e';
+/* ---------- Fin de la zona de edición ---------- */
+
+document.getElementById('titulo').textContent = TITULO;
+document.getElementById('historia').textContent = HEROE + ': ' + MISION;
+const lienzo = document.getElementById('c'), ctx = lienzo.getContext('2d'), info = document.getElementById('info');
+const teclas = {};
+let heroe, esfera, enemigos, puntos, jugando = false;
+
+function azar(max) { return Math.random() * max; }
+function nuevaEsfera() { esfera = { x: 20 + azar(440), y: 20 + azar(280), r: 7 }; }
+function empezar() {
+  heroe = { x: 240, y: 160, r: 10 };
+  enemigos = [];
+  for (let i = 0; i < NUM_ENEMIGOS; i++) {
+    const a = azar(Math.PI * 2);
+    enemigos.push({ x: azar(480), y: azar(100), r: 11, dx: Math.cos(a) * VELOCIDAD_ENEMIGOS, dy: Math.sin(a) * VELOCIDAD_ENEMIGOS });
+  }
+  puntos = 0; nuevaEsfera(); jugando = true;
+  info.textContent = 'Esferas recogidas: 0';
+}
+function choca(a, b) { return Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r; }
+function actualizar() {
+  if (teclas.ArrowLeft || teclas.a) heroe.x -= VELOCIDAD_HEROE;
+  if (teclas.ArrowRight || teclas.d) heroe.x += VELOCIDAD_HEROE;
+  if (teclas.ArrowUp || teclas.w) heroe.y -= VELOCIDAD_HEROE;
+  if (teclas.ArrowDown || teclas.s) heroe.y += VELOCIDAD_HEROE;
+  heroe.x = Math.max(heroe.r, Math.min(480 - heroe.r, heroe.x));
+  heroe.y = Math.max(heroe.r, Math.min(320 - heroe.r, heroe.y));
+  enemigos.forEach((e) => {
+    e.x += e.dx; e.y += e.dy;
+    if (e.x < e.r || e.x > 480 - e.r) e.dx = -e.dx;
+    if (e.y < e.r || e.y > 320 - e.r) e.dy = -e.dy;
+    if (choca(heroe, e)) { jugando = false; info.textContent = 'Te han alcanzado. Esferas recogidas: ' + puntos + '. Pulsa Enter para intentarlo otra vez.'; }
+  });
+  if (choca(heroe, esfera)) { puntos++; nuevaEsfera(); info.textContent = 'Esferas recogidas: ' + puntos; }
+}
+function dibujar() {
+  ctx.clearRect(0, 0, 480, 320);
+  if (!heroe) return;
+  [[esfera, COLOR_ESFERA], [heroe, COLOR_HEROE]].concat(enemigos.map((e) => [e, COLOR_ENEMIGO])).forEach((p) => {
+    ctx.fillStyle = p[1]; ctx.beginPath(); ctx.arc(p[0].x, p[0].y, p[0].r, 0, Math.PI * 2); ctx.fill();
+  });
+}
+function bucle() { if (jugando) actualizar(); dibujar(); requestAnimationFrame(bucle); }
+document.addEventListener('keydown', (ev) => { teclas[ev.key] = true; if (ev.key === 'Enter' && !jugando) empezar(); if (ev.key.startsWith('Arrow')) ev.preventDefault(); });
+document.addEventListener('keyup', (ev) => { teclas[ev.key] = false; });
+bucle();
+</script>
+</body>
+</html>
