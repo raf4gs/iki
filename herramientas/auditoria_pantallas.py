@@ -22,6 +22,7 @@ VISTAS = {
     'registro': "window.IKI.prueba(); window.IKI.ir('registro')",
     'explorar': "window.IKI.prueba(); window.IKI.ir('explorar')",
     'patrones': "window.IKI.prueba(); window.IKI.ir('patrones')",
+    'propuestas': "window.IKI.prueba(); window.IKI.ir('propuestas')",
     'retrato': "window.IKI.prueba(); window.IKI.ir('retrato')",
     'perfil_enlace': "@perfil",
     'perfil_nudo': "@perfil window.IKI.ir(0,'nudo')",
