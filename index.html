@@ -87,6 +87,24 @@
   .escala button { flex: 1; padding: 13px 0; border-radius: calc(var(--radio) * .7); border: 1.5px solid var(--borde); background: transparent; color: var(--suave); font: inherit; font-weight: 700; cursor: pointer; }
   .escala button.elegida { border-color: var(--accent); color: var(--txt); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
   .extremos { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: .74rem; color: var(--suave); }
+  .aro { fill: none; stroke: var(--borde); stroke-width: 1; stroke-dasharray: 3 5; }
+  .aro.vivo { stroke: var(--accent); stroke-dasharray: none; opacity: .55; }
+  .nodo { fill: var(--bg); stroke: var(--borde); stroke-width: 1.5; }
+  .nodo.foco { stroke: var(--accent); stroke-width: 3; }
+  .nn { font-size: 11px; font-weight: 700; fill: var(--txt); }
+  .desc { fill: none; stroke: var(--suave); stroke-width: 1; opacity: .5; }
+  .cgran { font-size: 40px; font-weight: 800; fill: var(--txt); }
+  .cpeq { font-size: 11px; fill: var(--suave); }
+  .cierra { transform-origin: 150px 150px; animation: cierra calc(var(--mov) * 2.6) ease both; }
+  @keyframes cierra { from { transform: scale(1.4); opacity: 0; } }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; padding: 10px 0; font-size: .9rem; font-weight: 600; list-style: none; border-top: 1px solid var(--borde); }
+  summary::-webkit-details-marker { display: none; }
+  details .item { margin-top: 10px; }
+  .guia details { margin-top: 0; }
+  .guia summary { border-top: 0; padding: 0; font-size: 1rem; }
+  .guia p { font-size: .9rem; margin: 12px 0 0; color: var(--suave); }
+  .guia b { color: var(--txt); }
   .rank { margin-top: 12px; }
   .rank .tx { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; margin-bottom: 5px; }
   .rank .tx span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -96,16 +114,16 @@
   .lectura { display: flex; flex-direction: column; gap: 10px; }
   .lectura p { font-size: .92rem; padding-left: 12px; border-left: 2px solid var(--accent); }
   .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: center; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--bg) 72%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid var(--borde); }
-  .nav-in { display: flex; gap: 2px; width: 100%; max-width: 480px; }
-  .nav button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; border: 1.5px solid transparent; border-radius: 14px; background: transparent; color: var(--suave); font: inherit; font-size: .62rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color calc(var(--mov) * .5) ease, border-color calc(var(--mov) * .5) ease; }
+  .nav-in { display: flex; gap: 4px; width: 100%; max-width: 480px; }
+  .nav button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border: 1.5px solid transparent; border-radius: 16px; background: transparent; color: var(--suave); font: inherit; font-size: .72rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color calc(var(--mov) * .5) ease, border-color calc(var(--mov) * .5) ease; }
   .nav button.actual { border-color: var(--accent); color: var(--txt); }
   .nav svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  @media (prefers-reduced-motion: reduce) { .pantalla, .anillo, .linea, .barra-r i { animation: none; } .linea { stroke-dasharray: none; } }
+  @media (prefers-reduced-motion: reduce) { .pantalla, .anillo, .linea, .barra-r i, .cierra { animation: none; } .linea { stroke-dasharray: none; } }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.10</span><button class="mini" data-act="salir">Salir</button></div></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.11</span><button class="mini" data-act="salir">Salir</button></div></div>
   <div id="pantalla"></div>
 </div>
 <nav class="nav"><div class="nav-in" id="nav"></div></nav>
@@ -135,10 +153,8 @@
 
   const NAV = [
     ['inicio', 'Inicio', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
-    ['registro', 'Registro', '<path d="M4 20h4L19 9l-4-4L4 16z"/>'],
-    ['explorar', 'Explorar', '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>'],
-    ['patrones', 'Patrones', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
     ['propuestas', 'Propuestas', '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>'],
+    ['circulo', 'Círculo', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'],
     ['retrato', 'Retrato', '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/>']
   ];
   const PREGUNTAS = [
@@ -152,7 +168,6 @@
     '¿Qué estás evitando y por qué?'
   ];
   const ESTADOS = [['probando', 'Probando'], ['por_probar', 'Por probar'], ['descartado', 'Descartado']];
-  const CATS = [['apasiona', 'Me apasiona', 'Algo que te llena'], ['no_gusta', 'No me gusta', 'Algo que te desgasta'], ['quiero', 'Quiero vivir', 'Una experiencia pendiente'], ['no_quiero', 'No quiero hacer', 'Algo que prefieres evitar']];
   const PARADAS = new Set(['porque', 'aunque', 'cuando', 'donde', 'sobre', 'entre', 'hacer', 'estaba', 'tengo', 'tiene', 'había', 'pero', 'también', 'mucho', 'muchas', 'hacía', 'desde', 'hasta', 'todo', 'todos', 'estoy', 'hemos', 'estar', 'sido', 'algo', 'ahora', 'después', 'antes', 'durante', 'fueron', 'podría', 'aquí', 'este', 'esta', 'esto', 'estos', 'estas', 'para', 'como', 'unos', 'unas', 'poco', 'bastante']);
 
   async function api(met, tabla, q, cuerpo) {
@@ -190,13 +205,6 @@
   /* ---------- cálculos ---------- */
   const regsDe = (id) => S.registros.filter((r) => r.interes_id === id);
   const puntua = (rs) => media(rs.map((r) => (r.energia + r.ilusion) / 2));
-  function racha() {
-    const sem = new Set(S.registros.map((r) => lunes(r.fecha)));
-    let c = lunes(hoy()), n = 0;
-    if (!sem.has(c)) c = suma(c, -7);
-    while (sem.has(c)) { n++; c = suma(c, -7); }
-    return n;
-  }
   function ranking() {
     return S.intereses.map((i) => ({ nombre: i.nombre, n: regsDe(i.id).length, v: puntua(regsDe(i.id)) })).filter((x) => x.n > 0).sort((a, b) => b.v - a.v);
   }
@@ -234,9 +242,18 @@
   }
 
   /* ---------- gráficos ---------- */
-  function anillo(v, nombre, id) {
-    const C = 2 * Math.PI * 36, off = v == null ? C : C * (1 - v / 10);
-    return '<div class="kpi"><svg viewBox="0 0 88 88" width="88" height="88" role="img" aria-label="' + nombre + '"><defs><linearGradient id="g' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--accent2)"/></linearGradient></defs><circle cx="44" cy="44" r="36" fill="none" stroke-width="8" style="stroke:var(--borde)"/><circle class="anillo" cx="44" cy="44" r="36" fill="none" stroke-width="8" stroke-linecap="round" transform="rotate(-90 44 44)" stroke="url(#g' + id + ')" style="--c:' + C.toFixed(1) + ';stroke-dasharray:' + C.toFixed(1) + ';stroke-dashoffset:' + off.toFixed(1) + '"/><text x="44" y="51" text-anchor="middle" class="num">' + (v == null ? '-' : num(v)) + '</text></svg><small>' + nombre + '</small></div>';
+  function circuloSvg() {
+    const l = S.caminos || [], act = l.filter((x) => x.estado !== 'descartado'), des = l.filter((x) => x.estado === 'descartado'), n = act.length, tot = l.length;
+    const RMAX = 104, RMIN = 30, R = n <= 1 ? 0 : RMIN + (RMAX - RMIN) * (n - 1) / Math.max(tot - 1, 1);
+    let g = '<circle class="aro" cx="150" cy="150" r="136"/><g class="cierra"><circle class="aro vivo" cx="150" cy="150" r="' + (n <= 1 ? 30 : R + 24) + '"/>';
+    act.forEach((x, k) => {
+      const a = -Math.PI / 2 + 2 * Math.PI * k / Math.max(n, 1), px = n === 1 ? 150 : 150 + R * Math.cos(a), py = n === 1 ? 150 : 150 + R * Math.sin(a), foco = x.estado === 'en_foco', num = l.indexOf(x) + 1;
+      g += '<circle class="nodo' + (foco ? ' foco' : '') + '" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + (foco ? 16 : 12) + '"/><text class="nn" x="' + px.toFixed(1) + '" y="' + (py + 3.5).toFixed(1) + '" text-anchor="middle">' + num + '</text>';
+    });
+    if (n > 1) g += '<text class="cgran" x="150" y="152" text-anchor="middle">' + n + '</text><text class="cpeq" x="150" y="170" text-anchor="middle">caminos</text>';
+    g += '</g>';
+    des.forEach((x, k) => { const a = -Math.PI / 2 + 2 * Math.PI * (k + 0.5) / Math.max(des.length, 1); g += '<circle class="desc" cx="' + (150 + 136 * Math.cos(a)).toFixed(1) + '" cy="' + (150 + 136 * Math.sin(a)).toFixed(1) + '" r="5"/>'; });
+    return '<svg viewBox="0 0 300 300" role="img" aria-label="Círculo de caminos: quedan ' + n + ' de ' + tot + '">' + g + '</svg>';
   }
   function grafLineas() {
     const n = 8, x0 = 28, x1 = 282, y0 = 12, y1 = 140, ser = serie(n);
@@ -280,17 +297,19 @@
     return t;
   }
   function vInicio() {
-    const h = hoy(), desde = suma(h, -6), sem = S.registros.filter((r) => r.fecha >= desde && r.fecha <= h);
-    const e = media(sem.map((r) => r.energia)), i = media(sem.map((r) => r.ilusion));
-    const mejor = sem.slice().sort((a, b) => (b.energia + b.ilusion) - (a.energia + a.ilusion))[0];
-    const rc = racha(), preg = PREGUNTAS[Math.floor(aFecha(h).getTime() / 604800000) % PREGUNTAS.length];
-    let t = pendientesHtml() + '<div class="tarjeta"><div class="etq">Tu semana</div><h2>Así va tu semana</h2><p class="sub">Del ' + corta(desde) + ' al ' + corta(h) + '</p>';
-    t += sem.length ? '<div class="kpis">' + anillo(e, 'Energía media', 'e') + anillo(i, 'Ilusión media', 'i') + '</div>' : '<p class="vacio">Aún no has registrado nada esta semana.</p><div class="acciones"><button class="btn pri" data-ir="registro">Hacer un registro</button></div>';
-    t += '</div>';
-    if (mejor) t += '<div class="tarjeta"><div class="etq">Lo mejor</div><h3>Lo que más te llenó</h3><div class="item"><div class="cab"><b>' + esc(mejor.titulo) + '</b><small>' + corta(mejor.fecha) + '</small></div><div class="chips"><span class="chip">Energía ' + mejor.energia + '</span><span class="chip">Ilusión ' + mejor.ilusion + '</span></div></div></div>';
-    t += '<div class="tarjeta"><div class="etq">Constancia</div><div class="grande">' + rc + (rc === 1 ? ' semana' : ' semanas') + '</div><p class="sub">' + (rc ? 'Seguidas con algún registro.' : 'Empieza hoy tu primera semana.') + '</p></div>';
-    t += '<div class="tarjeta"><div class="etq">Para reflexionar</div><h3>' + preg + '</h3><p class="vacio">Puedes responderla en tu próximo registro.</p></div>';
+    const l = S.caminos || [], vivos = l.filter((x) => x.estado !== 'descartado').length, foco = l.filter((x) => x.estado === 'en_foco');
+    const hip = (S.pistas || []).filter((x) => x.tipo === 'hipotesis' && !x.valoracion), ult = hip[hip.length - 1];
+    const pend = (S.propuestas || []).filter((p) => p.respuesta == null).length, preg = PREGUNTAS[Math.floor(aFecha(hoy()).getTime() / 604800000) % PREGUNTAS.length];
+    let t = pend ? pendientesHtml() : '<div class="tarjeta"><div class="etq">Propuestas</div><h3>Estás al día</h3><p class="sub">No tienes propuestas pendientes. Cuando me escribas en el chat, prepararé nuevas.</p></div>';
+    t += '<div class="tarjeta"><div class="etq">El círculo</div><h2>' + (l.length ? 'Quedan ' + vivos + ' de ' + l.length : 'Sin caminos') + '</h2><p class="sub">' + (foco.length ? 'En foco: ' + esc(foco.map((x) => x.nombre).join(', ')) + '.' : 'Aún no hay ningún camino en foco.') + '</p><div class="acciones" style="margin-top:0"><button class="btn pri" data-ir="circulo">Ver el círculo</button></div></div>';
+    if (ult) t += '<div class="tarjeta"><div class="etq">Última hipótesis</div><h3>' + esc(ult.texto) + '</h3><p class="sub">Dime si te reconoces en ella.</p><div class="acciones" style="margin-top:0"><button class="btn" data-ir="retrato">Ver descubrimientos</button></div></div>';
+    t += '<div class="tarjeta"><div class="etq">Para reflexionar</div><h3>' + preg + '</h3><p class="vacio">Cuéntamelo en el chat.</p></div>';
     return t;
+  }
+  function vCirculo() {
+    const l = S.caminos || [], vivos = l.filter((x) => x.estado !== 'descartado'), n = vivos.length, c = (e) => l.filter((x) => x.estado === e).length;
+    const t = '<div class="tarjeta"><div class="etq">Círculo</div><h2>' + (n === 1 ? 'Queda un camino' : 'Tu círculo') + '</h2><p class="sub">' + (n === 1 ? esc(vivos[0].nombre) : 'Se va cerrando con tus respuestas hasta que quede un solo camino.') + '</p><div class="grafico">' + circuloSvg() + '</div><div class="chips"><span class="chip">Quedan ' + n + ' de ' + l.length + '</span><span class="chip">En foco ' + c('en_foco') + '</span><span class="chip">Descartados ' + c('descartado') + '</span></div></div>';
+    return t + caminosHtml();
   }
   function vRegistro() {
     const opts = '<option value="">Ninguno</option>' + S.intereses.map((i) => '<option value="' + i.id + '">' + esc(i.nombre) + '</option>').join('');
@@ -343,44 +362,48 @@
   }
   function caminosHtml() {
     const l = S.caminos || [], E = [['en_foco', 'En foco'], ['abierto', 'Abierto'], ['descartado', 'Descartado']], G = [['en_foco', 'En foco'], ['abierto', 'Abiertos'], ['descartado', 'Descartados']];
-    const n = (e) => l.filter((x) => x.estado === e).length;
-    let t = '<div class="tarjeta"><div class="etq">El círculo</div><h3>Caminos en estudio</h3><p class="sub">Voy cerrando el círculo con tus respuestas. Tú tienes la última palabra.</p><div class="chips"><span class="chip">Abiertos ' + n('abierto') + '</span><span class="chip">En foco ' + n('en_foco') + '</span><span class="chip">Descartados ' + n('descartado') + '</span></div>';
-    if (!l.length) t += '<p class="vacio" style="margin-top:12px">Aún no hay caminos.</p>';
+    let t = '<div class="tarjeta"><div class="etq">Caminos</div><h3>Los caminos y su estado</h3><p class="sub">Tú tienes la última palabra: cambia el estado si no estás de acuerdo.</p>';
+    if (!l.length) t += '<p class="vacio">Aún no hay caminos.</p>';
     G.forEach((g) => {
       const m = l.filter((x) => x.estado === g[0]);
       if (!m.length) return;
       t += '<h3 style="margin:18px 0 8px">' + g[1] + '</h3>';
-      m.forEach((x) => { t += '<div class="item"><b>' + esc(x.nombre) + '</b>' + (x.razon ? '<p>' + esc(x.razon) + '</p>' : '') + '<div class="seg">' + E.map((o) => '<button class="' + (x.estado === o[0] ? 'elegida' : '') + '" data-act="estado-camino" data-id="' + x.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div></div>'; });
+      m.forEach((x) => { t += '<div class="item"><b>' + (l.indexOf(x) + 1) + '. ' + esc(x.nombre) + '</b>' + (x.razon ? '<p>' + esc(x.razon) + '</p>' : '') + '<div class="seg">' + E.map((o) => '<button class="' + (x.estado === o[0] ? 'elegida' : '') + '" data-act="estado-camino" data-id="' + x.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div></div>'; });
     });
     return t + '</div>';
+  }
+  function itemPista(x, botones) {
+    return '<div class="item"><b>' + esc(x.texto) + '</b>' + (x.evidencia ? '<p>' + esc(x.evidencia) + '</p>' : '') + (botones ? '<div class="seg">' + [['me_reconozco', 'Me reconozco'], ['no_exactamente', 'No exactamente']].map((o) => '<button class="' + (x.valoracion === o[0] ? 'elegida' : '') + '" data-act="valorar-pista" data-id="' + x.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>' : '') + '</div>';
   }
   function pistasHtml() {
-    const l = S.pistas || [];
+    const l = S.pistas || [], hip = l.filter((x) => x.tipo === 'hipotesis'), pend = hip.filter((x) => !x.valoracion), val = hip.filter((x) => x.valoracion), dat = l.filter((x) => x.tipo !== 'hipotesis');
     let t = '<div class="tarjeta"><div class="etq">Descubrimientos</div><h3>Lo que llevo descubierto</h3><p class="sub">Son hipótesis a partir de lo que me has contado. Dime si te reconoces.</p>';
     if (!l.length) t += '<p class="vacio">Aún no hay pistas. Aparecerán según avance la entrevista.</p>';
-    l.forEach((x) => {
-      t += '<div class="item"><b>' + esc(x.texto) + '</b>' + (x.evidencia ? '<p>' + esc(x.evidencia) + '</p>' : '') + '<div class="seg">' + [['me_reconozco', 'Me reconozco'], ['no_exactamente', 'No exactamente']].map((o) => '<button class="' + (x.valoracion === o[0] ? 'elegida' : '') + '" data-act="valorar-pista" data-id="' + x.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div></div>';
-    });
+    pend.slice(0, 5).forEach((x) => { t += itemPista(x, true); });
+    if (pend.length > 5) t += '<details><summary>Ver las ' + (pend.length - 5) + ' hipótesis restantes</summary>' + pend.slice(5).map((x) => itemPista(x, true)).join('') + '</details>';
+    if (val.length) t += '<details><summary>Ya valoradas (' + val.length + ')</summary>' + val.map((x) => itemPista(x, true)).join('') + '</details>';
+    if (dat.length) t += '<details><summary>Lo que me has contado (' + dat.length + ')</summary>' + dat.map((x) => itemPista(x, false)).join('') + '</details>';
     return t + '</div>';
   }
+  function guiaHtml() {
+    return '<div class="tarjeta guia"><details><summary>Guía de IKI: qué hace cada sección</summary>' +
+      '<p><b>Inicio.</b> Tu resumen: propuestas pendientes, estado del círculo, la última hipótesis y una pregunta para reflexionar.</p>' +
+      '<p><b>Propuestas.</b> Es lo principal. Claude te propone algo concreto y tú respondes de 1 (no estoy de acuerdo) a 6 (muy de acuerdo). No hay punto medio. Tus respuestas cierran el círculo.</p>' +
+      '<p><b>Círculo.</b> Todos los caminos posibles dentro de un círculo que se va cerrando hasta que quede uno. Cada camino puede estar en foco, abierto o descartado, y puedes cambiarlo tú.</p>' +
+      '<p><b>Retrato.</b> Las hipótesis que Claude saca de tus respuestas: marca Me reconozco o No exactamente. Aquí están también tus datos, las herramientas opcionales y tu cuenta.</p>' +
+      '<p><b>Cómo usarla.</b> Primero responde las propuestas. Después contesta en el chat las preguntas de Claude. De vez en cuando revisa las hipótesis del Retrato y mira cómo se cierra el círculo.</p>' +
+      '<p><b>Opcionales.</b> Mis actividades, el diario de registro y los patrones están en Más herramientas. No hace falta usarlos.</p>' +
+      '</details></div>';
+  }
   function vRetrato() {
-    const ap = ranking().filter((x) => x.n >= 2 && x.v >= 7).slice(0, 3);
-    let t = '<div class="tarjeta"><div class="etq">Retrato</div><h2>Tu retrato</h2><p class="sub">Se construye con lo que registras y con lo que escribes aquí.</p><h3>Lo que parece apasionarte</h3>' +
-      (ap.length ? '<div class="chips">' + ap.map((x) => '<span class="chip">' + esc(x.nombre) + '</span>').join('') + '</div>' : '<p class="vacio">Necesito al menos dos registros muy valorados de un mismo interés.</p>') + '</div>';
-    t += caminosHtml();
+    let t = '<div class="tarjeta"><div class="etq">Retrato</div><h2>Tu retrato</h2><p class="sub">Lo que voy descubriendo de ti a partir de tus respuestas.</p></div>';
     t += pistasHtml();
-    CATS.forEach((c) => {
-      const l = S.retrato.filter((x) => x.categoria === c[0]);
-      t += '<div class="tarjeta"><h3>' + c[1] + '</h3>';
-      if (!l.length) t += '<p class="vacio">Aún no has añadido nada.</p>';
-      l.forEach((x) => { t += '<div class="fila"><span>' + esc(x.texto) + '</span><span class="bt">' + (c[0] === 'quiero' ? '<button class="mini' + (x.hecho ? ' elegida' : '') + '" data-act="hecho" data-id="' + x.id + '">Hecho</button>' : '') + '<button class="mini" data-act="quitar" data-id="' + x.id + '">Quitar</button></span></div>'; });
-      t += '<div class="add"><input id="c-' + c[0] + '" type="text" maxlength="100" placeholder="' + c[2] + '"><button class="mini" data-act="add-retrato" data-cat="' + c[0] + '">Añadir</button></div></div>';
-    });
+    t += '<div class="tarjeta"><h3>Más herramientas</h3><p class="sub">Opcionales, por si algún día te sirven.</p><div class="acciones" style="flex-direction:column;margin-top:0"><button class="btn" data-ir="explorar">Mis actividades</button><button class="btn" data-ir="registro">Diario de registro</button><button class="btn" data-ir="patrones">Patrones de mis registros</button><a class="btn" href="perfil.html">Perfil base: enlace y nudo</a></div></div>';
+    t += guiaHtml();
     t += '<div class="tarjeta"><h3>Cuenta</h3><p class="sub">Cambia tu contraseña cuando quieras.</p><label for="cuenta-pass">Nueva contraseña</label><input id="cuenta-pass" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"><div class="acciones" style="flex-direction:column"><button class="btn" data-act="cambiar-pass">Cambiar contraseña</button><button class="btn" data-act="salir">Cerrar sesión</button></div></div>';
-    t += '<div class="tarjeta"><h3>Perfil base</h3><p class="sub">Tus respuestas de enlace y nudo siguen guardadas y alimentan los patrones.</p><div class="acciones" style="margin-top:0"><a class="btn" href="perfil.html">Revisar mi perfil base</a></div></div>';
     return t;
   }
-  const VISTAS = { inicio: vInicio, registro: vRegistro, explorar: vExplorar, patrones: vPatrones, propuestas: vPropuestas, retrato: vRetrato };
+  const VISTAS = { inicio: vInicio, registro: vRegistro, explorar: vExplorar, patrones: vPatrones, propuestas: vPropuestas, circulo: vCirculo, retrato: vRetrato };
 
   function pintar(anim, limpiar) {
     const cont = $('#pantalla'), guardado = {};
@@ -412,12 +435,6 @@
     },
     'estado-interes': (b) => guarda(async () => { const r = await api('PATCH', 'iki_intereses', 'id=eq.' + b.dataset.id, { estado: b.dataset.v }); S.intereses = S.intereses.map((x) => (x.id === b.dataset.id ? r[0] : x)); }),
     'eliminar-interes': (b) => { if (confirm('¿Eliminar este interés? Sus registros se conservan.')) guarda(async () => { await api('DELETE', 'iki_intereses', 'id=eq.' + b.dataset.id); S.intereses = S.intereses.filter((x) => x.id !== b.dataset.id); S.registros.forEach((r) => { if (r.interes_id === b.dataset.id) r.interes_id = null; }); }); },
-    'add-retrato': (b) => {
-      const id = 'c-' + b.dataset.cat, t = val(id); if (!t) { estado('Escribe algo primero'); return; }
-      guarda(async () => { const r = await api('POST', 'iki_retrato', '', { categoria: b.dataset.cat, texto: t }); S.retrato.push(r[0]); }, [id]);
-    },
-    'hecho': (b) => guarda(async () => { const x = S.retrato.filter((y) => y.id === b.dataset.id)[0]; const r = await api('PATCH', 'iki_retrato', 'id=eq.' + x.id, { hecho: !x.hecho }); S.retrato = S.retrato.map((y) => (y.id === x.id ? r[0] : y)); }),
-    'quitar': (b) => guarda(async () => { await api('DELETE', 'iki_retrato', 'id=eq.' + b.dataset.id); S.retrato = S.retrato.filter((x) => x.id !== b.dataset.id); }),
     'valorar-pista': (b) => guarda(async () => { const x = S.pistas.filter((y) => y.id === b.dataset.id)[0]; const v = x.valoracion === b.dataset.v ? null : b.dataset.v; const r = await api('PATCH', 'iki_pistas', 'id=eq.' + x.id, { valoracion: v }); S.pistas = S.pistas.map((y) => (y.id === x.id ? r[0] : y)); }),
     'estado-camino': (b) => guarda(async () => { const r = await api('PATCH', 'iki_caminos', 'id=eq.' + b.dataset.id, { estado: b.dataset.v }); S.caminos = S.caminos.map((y) => (y.id === b.dataset.id ? r[0] : y)); }),
     'responder': (b) => guarda(async () => { const r = await api('PATCH', 'iki_propuestas', 'id=eq.' + b.dataset.id, { respuesta: +b.dataset.v, respondida_at: new Date().toISOString() }); S.propuestas = S.propuestas.map((y) => (y.id === b.dataset.id ? r[0] : y)); }),
@@ -452,8 +469,8 @@
       S.retrato = [{ id: 't1', categoria: 'apasiona', texto: 'Crear objetos con las manos', hecho: false }, { id: 't2', categoria: 'quiero', texto: 'Viajar solo durante un mes', hecho: false }, { id: 't3', categoria: 'quiero', texto: 'Terminar un proyecto propio', hecho: true }, { id: 't4', categoria: 'no_quiero', texto: 'Trabajos sin autonomía', hecho: false }];
       S.resp = [{ pregunta_id: 'x', etiquetas: ['moderno', 'técnico', 'sobrio', 'moderno'], fase: 'enlace' }];
       S.propuestas = [{ id: 'q1', texto: 'Me atrae la idea de dedicarme a la ciberseguridad.', razon: 'Une retos que se resuelven y que funcionan con ataque y defensa.', respuesta: null }, { id: 'q2', texto: 'Prefiero trabajar en equipo con personas cercanas antes que trabajar solo.', razon: 'Tu paz la recuerdas con personas cercanas.', respuesta: 5 }];
-      S.caminos = [{ id: 'c1', nombre: 'Ciberseguridad', razon: 'Une resolver retos que funcionan con ataque y defensa.', estado: 'en_foco' }, { id: 'c2', nombre: 'Dibujar o ilustrar', razon: 'Dibujabas durante horas buscando concentración y tranquilidad.', estado: 'abierto' }, { id: 'c3', nombre: 'Entrenar y el deporte', razon: 'Te interesa entrenar, aunque te cuesta mantenerlo.', estado: 'descartado' }];
-      S.pistas = [{ id: 'p1', texto: 'Buscas un estado de concentración y calma más que un resultado.', evidencia: 'Al dibujar buscabas concentración, tranquilidad y pasar el rato.', valoracion: 'me_reconozco' }, { id: 'p2', texto: 'Las historias y los mundos son un hilo común en lo que te atrae.', evidencia: 'Disfrutas de la historia y de explorar mundos en los videojuegos.', valoracion: null }];
+      S.caminos = [{ id: 'c1', nombre: 'Ciberseguridad', razon: 'Une resolver retos que funcionan con ataque y defensa.', estado: 'en_foco' }, { id: 'c2', nombre: 'Dibujar o ilustrar', razon: 'Dibujabas durante horas buscando concentración y tranquilidad.', estado: 'abierto' }, { id: 'c3', nombre: 'Entrenar y el deporte', razon: 'Te interesa entrenar, aunque te cuesta mantenerlo.', estado: 'descartado' }, { id: 'c4', nombre: 'Sistemas y servidores', razon: 'Te gusta resolver algo y que funcione.', estado: 'abierto' }, { id: 'c5', nombre: 'Crear videojuegos', razon: 'Disfrutas de la historia y el reto.', estado: 'abierto' }, { id: 'c6', nombre: 'Enseñar informática', razon: 'Respondiste 2 de 6.', estado: 'descartado' }, { id: 'c7', nombre: 'Música o guitarra', razon: 'La guitarra puede darte calma.', estado: 'abierto' }];
+      S.pistas = [{ id: 'p1', texto: 'Buscas un estado de concentración y calma más que un resultado.', evidencia: 'Al dibujar buscabas concentración, tranquilidad y pasar el rato.', tipo: 'hipotesis', valoracion: 'me_reconozco' }, { id: 'p2', texto: 'Las historias y los mundos son un hilo común en lo que te atrae.', evidencia: 'Disfrutas de la historia y de explorar mundos en los videojuegos.', tipo: 'hipotesis', valoracion: null }, { id: 'p3', texto: 'Te gusta resolver algo y que funcione.', evidencia: 'Lo dijiste con claridad.', tipo: 'dato', valoracion: null }];
       cargando = false; fallo = false; pintar(false);
     }
   };
