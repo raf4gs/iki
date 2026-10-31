@@ -123,7 +123,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.11</span><button class="mini" data-act="salir">Salir</button></div></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.12</span><button class="mini" data-act="salir">Salir</button></div></div>
   <div id="pantalla"></div>
 </div>
 <nav class="nav"><div class="nav-in" id="nav"></div></nav>
@@ -133,7 +133,7 @@
   'use strict';
   const BASE = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/';
 
-  const S = { registros: [], intereses: [], retrato: [], resp: [], pistas: [], caminos: [], propuestas: [] };
+  const S = { registros: [], intereses: [], retrato: [], resp: [], pistas: [], caminos: [], propuestas: [], experimentos: [] };
   let vista = 'inicio', cargando = true, fallo = false;
 
   const $ = (s) => document.querySelector(s);
@@ -189,9 +189,10 @@
         api('GET', 'iki_respuestas', 'select=pregunta_id,etiquetas,fase'),
         api('GET', 'iki_pistas', 'select=*&order=created_at.asc'),
         api('GET', 'iki_caminos', 'select=*&order=created_at.asc'),
-        api('GET', 'iki_propuestas', 'select=*&order=created_at.asc')
+        api('GET', 'iki_propuestas', 'select=*&order=created_at.asc'),
+        api('GET', 'iki_experimentos', 'select=*&order=created_at.asc')
       ]);
-      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3]; S.pistas = r[4]; S.caminos = r[5]; S.propuestas = r[6];
+      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3]; S.pistas = r[4]; S.caminos = r[5]; S.propuestas = r[6]; S.experimentos = r[7];
     } catch (e) { fallo = true; }
     cargando = false; pintar(false);
   }
@@ -296,11 +297,38 @@
     });
     return t;
   }
+  const EXP = { a: null, b: null, c: null };
+  const PREG_EXP = [['a', '¿Perdiste la noción del tiempo?'], ['b', '¿Te dieron ganas de repetirlo?'], ['c', '¿Lo seguiste pensando después?']];
+  const pendienteExp = () => (S.experimentos || []).filter((x) => x.estado === 'propuesto').slice(-1)[0];
+  function escalaExp(k) {
+    return '<div class="escala">' + [1, 2, 3, 4, 5, 6].map((v) => '<button class="' + (EXP[k] === v ? 'elegida' : '') + '" data-act="exp-nivel" data-k="' + k + '" data-v="' + v + '">' + v + '</button>').join('') + '</div><div class="extremos"><span>Nada</span><span>Muchísimo</span></div>';
+  }
+  function vExperimento() {
+    const act = pendienteExp(), hist = (S.experimentos || []).filter((x) => x.estado === 'hecho');
+    let t = '<div class="tarjeta"><div class="etq">Experimento</div><h2>' + (act ? 'Esta semana' : 'Sin experimento') + '</h2>';
+    if (!act) t += '<p class="sub">No hay ningún experimento pendiente. Pídele a Claude el de esta semana en el chat.</p></div>';
+    else {
+      t += '<p class="sub">' + esc(act.titulo) + ' · ' + act.duracion_min + ' minutos</p>' + (act.objetivo ? '<p class="vacio">' + esc(act.objetivo) + '</p>' : '');
+      (act.pasos || '').split('\n').filter((x) => x.trim()).forEach((p, i) => { t += '<div class="fila"><span>' + (i + 1) + '. ' + esc(p) + '</span></div>'; });
+      if (act.recurso_url) t += '<div class="acciones"><a class="btn pri" href="' + esc(act.recurso_url) + '" target="_blank" rel="noopener">' + esc(act.recurso_texto || 'Abrir recurso') + '</a></div>';
+      t += '</div><div class="tarjeta"><div class="etq">Cuando termines</div><h3>Cuéntame cómo te fue</h3>';
+      PREG_EXP.forEach((q) => { t += '<div class="item"><b>' + q[1] + '</b>' + escalaExp(q[0]) + '</div>'; });
+      t += '<label for="exp-nota">Cómo te sentiste, en pocas palabras</label><textarea id="exp-nota" placeholder="Escribe aquí"></textarea><div class="acciones" style="flex-direction:column"><button class="btn pri" data-act="exp-guardar">Guardar resultado</button><button class="btn" data-act="exp-omitir">Omitir esta semana</button></div></div>';
+    }
+    if (hist.length) {
+      t += '<div class="tarjeta"><h3>Experimentos hechos</h3>';
+      hist.slice().reverse().forEach((x) => { t += '<div class="item"><b>' + esc(x.titulo) + '</b><div class="chips"><span class="chip">Noción del tiempo ' + x.nocion + '</span><span class="chip">Ganas de repetir ' + x.ganas + '</span><span class="chip">Lo seguí pensando ' + x.pensado + '</span></div>' + (x.nota ? '<p>' + esc(x.nota) + '</p>' : '') + '</div>'; });
+      t += '</div>';
+    }
+    return t;
+  }
   function vInicio() {
     const l = S.caminos || [], vivos = l.filter((x) => x.estado !== 'descartado').length, foco = l.filter((x) => x.estado === 'en_foco');
     const hip = (S.pistas || []).filter((x) => x.tipo === 'hipotesis' && !x.valoracion), ult = hip[hip.length - 1];
     const pend = (S.propuestas || []).filter((p) => p.respuesta == null).length, preg = PREGUNTAS[Math.floor(aFecha(hoy()).getTime() / 604800000) % PREGUNTAS.length];
     let t = pend ? pendientesHtml() : '<div class="tarjeta"><div class="etq">Propuestas</div><h3>Estás al día</h3><p class="sub">No tienes propuestas pendientes. Cuando me escribas en el chat, prepararé nuevas.</p></div>';
+    const ex = pendienteExp();
+    if (ex) t = '<div class="tarjeta"><div class="etq">Experimento de la semana</div><h3>' + esc(ex.titulo) + '</h3><p class="sub">' + ex.duracion_min + ' minutos. ' + esc(ex.objetivo || '') + '</p><div class="acciones" style="margin-top:0"><button class="btn pri" data-ir="experimento">Abrir experimento</button></div></div>' + t;
     t += '<div class="tarjeta"><div class="etq">El círculo</div><h2>' + (l.length ? 'Quedan ' + vivos + ' de ' + l.length : 'Sin caminos') + '</h2><p class="sub">' + (foco.length ? 'En foco: ' + esc(foco.map((x) => x.nombre).join(', ')) + '.' : 'Aún no hay ningún camino en foco.') + '</p><div class="acciones" style="margin-top:0"><button class="btn pri" data-ir="circulo">Ver el círculo</button></div></div>';
     if (ult) t += '<div class="tarjeta"><div class="etq">Última hipótesis</div><h3>' + esc(ult.texto) + '</h3><p class="sub">Dime si te reconoces en ella.</p><div class="acciones" style="margin-top:0"><button class="btn" data-ir="retrato">Ver descubrimientos</button></div></div>';
     t += '<div class="tarjeta"><div class="etq">Para reflexionar</div><h3>' + preg + '</h3><p class="vacio">Cuéntamelo en el chat.</p></div>';
@@ -391,7 +419,8 @@
       '<p><b>Propuestas.</b> Es lo principal. Claude te propone algo concreto y tú respondes de 1 (no estoy de acuerdo) a 6 (muy de acuerdo). No hay punto medio. Tus respuestas cierran el círculo.</p>' +
       '<p><b>Círculo.</b> Todos los caminos posibles dentro de un círculo que se va cerrando hasta que quede uno. Cada camino puede estar en foco, abierto o descartado, y puedes cambiarlo tú.</p>' +
       '<p><b>Retrato.</b> Las hipótesis que Claude saca de tus respuestas: marca Me reconozco o No exactamente. Aquí están también tus datos, las herramientas opcionales y tu cuenta.</p>' +
-      '<p><b>Cómo usarla.</b> Primero responde las propuestas. Después contesta en el chat las preguntas de Claude. De vez en cuando revisa las hipótesis del Retrato y mira cómo se cierra el círculo.</p>' +
+      '<p><b>Experimento.</b> Cada semana Claude te propone un experimento de una hora para probar algo de verdad. Al terminar cuentas cómo te fue con tres preguntas de 1 a 6. Aparece en Inicio.</p>' +
+      '<p><b>Cómo usarla.</b> Responde las propuestas, contesta en el chat las preguntas de Claude y haz el experimento de la semana. De vez en cuando revisa las hipótesis del Retrato y mira cómo evoluciona el círculo.</p>' +
       '<p><b>Opcionales.</b> Mis actividades, el diario de registro y los patrones están en Más herramientas. No hace falta usarlos.</p>' +
       '</details></div>';
   }
@@ -403,7 +432,7 @@
     t += '<div class="tarjeta"><h3>Cuenta</h3><p class="sub">Cambia tu contraseña cuando quieras.</p><label for="cuenta-pass">Nueva contraseña</label><input id="cuenta-pass" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"><div class="acciones" style="flex-direction:column"><button class="btn" data-act="cambiar-pass">Cambiar contraseña</button><button class="btn" data-act="salir">Cerrar sesión</button></div></div>';
     return t;
   }
-  const VISTAS = { inicio: vInicio, registro: vRegistro, explorar: vExplorar, patrones: vPatrones, propuestas: vPropuestas, circulo: vCirculo, retrato: vRetrato };
+  const VISTAS = { inicio: vInicio, registro: vRegistro, explorar: vExplorar, patrones: vPatrones, propuestas: vPropuestas, circulo: vCirculo, experimento: vExperimento, retrato: vRetrato };
 
   function pintar(anim, limpiar) {
     const cont = $('#pantalla'), guardado = {};
@@ -438,6 +467,15 @@
     'valorar-pista': (b) => guarda(async () => { const x = S.pistas.filter((y) => y.id === b.dataset.id)[0]; const v = x.valoracion === b.dataset.v ? null : b.dataset.v; const r = await api('PATCH', 'iki_pistas', 'id=eq.' + x.id, { valoracion: v }); S.pistas = S.pistas.map((y) => (y.id === x.id ? r[0] : y)); }),
     'estado-camino': (b) => guarda(async () => { const r = await api('PATCH', 'iki_caminos', 'id=eq.' + b.dataset.id, { estado: b.dataset.v }); S.caminos = S.caminos.map((y) => (y.id === b.dataset.id ? r[0] : y)); }),
     'responder': (b) => guarda(async () => { const r = await api('PATCH', 'iki_propuestas', 'id=eq.' + b.dataset.id, { respuesta: +b.dataset.v, respondida_at: new Date().toISOString() }); S.propuestas = S.propuestas.map((y) => (y.id === b.dataset.id ? r[0] : y)); }),
+    'exp-nivel': (b) => { EXP[b.dataset.k] = +b.dataset.v; pintar(false); },
+    'exp-guardar': () => {
+      const x = pendienteExp();
+      if (!x) return;
+      if (EXP.a == null || EXP.b == null || EXP.c == null) { estado('Responde las tres preguntas'); return; }
+      const nota = val('exp-nota') || null;
+      guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'hecho', nocion: EXP.a, ganas: EXP.b, pensado: EXP.c, nota: nota, hecho_at: new Date().toISOString() }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); EXP.a = EXP.b = EXP.c = null; }, ['exp-nota']);
+    },
+    'exp-omitir': () => { const x = pendienteExp(); if (x && confirm('¿Omitir este experimento?')) guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'omitido' }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); }); },
     'recargar': () => cargar(),
     'salir': () => IKIAuth.salir(),
     'cambiar-pass': () => {
@@ -469,6 +507,7 @@
       S.retrato = [{ id: 't1', categoria: 'apasiona', texto: 'Crear objetos con las manos', hecho: false }, { id: 't2', categoria: 'quiero', texto: 'Viajar solo durante un mes', hecho: false }, { id: 't3', categoria: 'quiero', texto: 'Terminar un proyecto propio', hecho: true }, { id: 't4', categoria: 'no_quiero', texto: 'Trabajos sin autonomía', hecho: false }];
       S.resp = [{ pregunta_id: 'x', etiquetas: ['moderno', 'técnico', 'sobrio', 'moderno'], fase: 'enlace' }];
       S.propuestas = [{ id: 'q1', texto: 'Me atrae la idea de dedicarme a la ciberseguridad.', razon: 'Une retos que se resuelven y que funcionan con ataque y defensa.', respuesta: null }, { id: 'q2', texto: 'Prefiero trabajar en equipo con personas cercanas antes que trabajar solo.', razon: 'Tu paz la recuerdas con personas cercanas.', respuesta: 5 }];
+      S.experimentos = [{ id: 'x1', titulo: 'Crear un mini-juego en una hora', objetivo: 'Comprobar si crear algo propio, aunque sea pequeño, te absorbe y te dan ganas de seguir.', pasos: 'Abre el mini-juego de partida y juégalo dos minutos.\nCambia la historia: quién es el héroe y qué debe salvar.\nCambia una regla.', duracion_min: 60, recurso_url: 'experimentos/mini-juego.html', recurso_texto: 'Abrir el mini-juego de partida', estado: 'propuesto' }, { id: 'x0', titulo: 'Dibujar un personaje', estado: 'hecho', nocion: 5, ganas: 4, pensado: 3, nota: 'Se me pasó el tiempo.' }];
       S.caminos = [{ id: 'c1', nombre: 'Ciberseguridad', razon: 'Une resolver retos que funcionan con ataque y defensa.', estado: 'en_foco' }, { id: 'c2', nombre: 'Dibujar o ilustrar', razon: 'Dibujabas durante horas buscando concentración y tranquilidad.', estado: 'abierto' }, { id: 'c3', nombre: 'Entrenar y el deporte', razon: 'Te interesa entrenar, aunque te cuesta mantenerlo.', estado: 'descartado' }, { id: 'c4', nombre: 'Sistemas y servidores', razon: 'Te gusta resolver algo y que funcione.', estado: 'abierto' }, { id: 'c5', nombre: 'Crear videojuegos', razon: 'Disfrutas de la historia y el reto.', estado: 'abierto' }, { id: 'c6', nombre: 'Enseñar informática', razon: 'Respondiste 2 de 6.', estado: 'descartado' }, { id: 'c7', nombre: 'Música o guitarra', razon: 'La guitarra puede darte calma.', estado: 'abierto' }];
       S.pistas = [{ id: 'p1', texto: 'Buscas un estado de concentración y calma más que un resultado.', evidencia: 'Al dibujar buscabas concentración, tranquilidad y pasar el rato.', tipo: 'hipotesis', valoracion: 'me_reconozco' }, { id: 'p2', texto: 'Las historias y los mundos son un hilo común en lo que te atrae.', evidencia: 'Disfrutas de la historia y de explorar mundos en los videojuegos.', tipo: 'hipotesis', valoracion: null }, { id: 'p3', texto: 'Te gusta resolver algo y que funcione.', evidencia: 'Lo dijiste con claridad.', tipo: 'dato', valoracion: null }];
       cargando = false; fallo = false; pintar(false);
