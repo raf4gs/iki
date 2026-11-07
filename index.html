@@ -105,6 +105,18 @@
   .guia summary { border-top: 0; padding: 0; font-size: 1rem; }
   .guia p { font-size: .9rem; margin: 12px 0 0; color: var(--suave); }
   .guia b { color: var(--txt); }
+  .item b { text-wrap-style: balance; }
+  .item p { text-wrap-style: pretty; }
+  .dims { margin-top: 10px; }
+  .dim { margin-top: 8px; }
+  .dim .tx { display: flex; justify-content: space-between; gap: 10px; font-size: .78rem; color: var(--suave); margin-bottom: 4px; }
+  .dim .barra-r { height: 6px; }
+  .ev { margin-top: 10px; padding-left: 10px; border-left: 2px solid var(--borde); }
+  .ev b { font-size: .78rem; color: var(--txt); }
+  .ev p { font-size: .85rem; margin: 2px 0 0; }
+  .pct, .rank .tx b, .fila b { white-space: nowrap; }
+  .pct { font-size: 1.1rem; }
+  .peq { display: block; margin-top: 4px; color: var(--suave); font-size: .78rem; }
   .rank { margin-top: 12px; }
   .rank .tx { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; margin-bottom: 5px; }
   .rank .tx span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -123,7 +135,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.12</span><button class="mini" data-act="salir">Salir</button></div></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.13</span><button class="mini" data-act="salir">Salir</button></div></div>
   <div id="pantalla"></div>
 </div>
 <nav class="nav"><div class="nav-in" id="nav"></div></nav>
@@ -133,7 +145,7 @@
   'use strict';
   const BASE = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/';
 
-  const S = { registros: [], intereses: [], retrato: [], resp: [], pistas: [], caminos: [], propuestas: [], experimentos: [] };
+  const S = { registros: [], intereses: [], retrato: [], resp: [], pistas: [], caminos: [], propuestas: [], experimentos: [], afin: [], ev: [], evol: [], dudas: [], balance: [] };
   let vista = 'inicio', cargando = true, fallo = false;
 
   const $ = (s) => document.querySelector(s);
@@ -154,7 +166,7 @@
   const NAV = [
     ['inicio', 'Inicio', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
     ['propuestas', 'Propuestas', '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>'],
-    ['circulo', 'Círculo', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'],
+    ['circulo', 'Afinidad', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'],
     ['retrato', 'Retrato', '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/>']
   ];
   const PREGUNTAS = [
@@ -190,9 +202,14 @@
         api('GET', 'iki_pistas', 'select=*&order=created_at.asc'),
         api('GET', 'iki_caminos', 'select=*&order=created_at.asc'),
         api('GET', 'iki_propuestas', 'select=*&order=created_at.asc'),
-        api('GET', 'iki_experimentos', 'select=*&order=created_at.asc')
+        api('GET', 'iki_experimentos', 'select=*&order=created_at.asc'),
+        api('GET', 'iki_afinidad', 'select=*'),
+        api('GET', 'iki_ev', 'select=*&order=creado.desc'),
+        api('GET', 'iki_evolucion_v', 'select=*'),
+        api('GET', 'iki_dudas', 'select=*'),
+        api('GET', 'iki_balance', 'select=*&order=created_at.asc')
       ]);
-      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3]; S.pistas = r[4]; S.caminos = r[5]; S.propuestas = r[6]; S.experimentos = r[7];
+      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3]; S.pistas = r[4]; S.caminos = r[5]; S.propuestas = r[6]; S.experimentos = r[7]; S.afin = r[8]; S.ev = r[9]; S.evol = r[10]; S.dudas = r[11]; S.balance = r[12];
     } catch (e) { fallo = true; }
     cargando = false; pintar(false);
   }
@@ -243,18 +260,69 @@
   }
 
   /* ---------- gráficos ---------- */
+  const DIM = [['atencion', 'Me llama la atención'], ['habilidad', 'Se me da bien'], ['disfrute', 'Lo disfruto'], ['pasion', 'Podría apasionarme']];
+  const CONF = { baja: 'Confianza baja', media: 'Confianza media', alta: 'Confianza alta' };
+  const af = (id) => (S.afin || []).filter((a) => a.camino_id === id)[0];
+  const nodo = (id) => (S.caminos || []).filter((c) => c.id === id)[0];
+  const hijosDe = (id) => (S.caminos || []).filter((c) => c.parent_id === id);
+  const dimNombre = (k) => (DIM.filter((d) => d[0] === k)[0] || [k, k])[1];
+  const AFV = (c) => af(c.id) || { afinidad: 50, peso_total: 0, prioridad: 'media', confianza: 'baja', pasion_comprobada: false };
+  const ordenAf = (l) => l.slice().sort((x, y) => AFV(y).afinidad - AFV(x).afinidad || AFV(y).peso_total - AFV(x).peso_total);
+  function delta(id) {
+    const l = (S.evol || []).filter((e) => e.camino_id === id).sort((a, b) => (a.momento < b.momento ? -1 : 1));
+    return l.length < 2 ? null : l[l.length - 1].afinidad - l[l.length - 2].afinidad;
+  }
+  const deltaTxt = (d) => (d == null ? 'Primera medición' : d === 0 ? 'Sin cambios' : (d > 0 ? '+' : '') + d + ' puntos');
+  function dimsHtml(a) {
+    return '<div class="dims">' + DIM.map((d) => {
+      const w = a['w_' + d[0]], v = a[d[0]], sin = !w;
+      const txt = sin ? 'Sin datos' : (d[0] === 'pasion' && !a.pasion_comprobada ? v + ' % · sin comprobar' : v + ' %');
+      return '<div class="dim"><div class="tx"><span>' + d[1] + '</span><span>' + txt + '</span></div><div class="barra-r"><i style="width:' + (sin ? 0 : v) + '%"></i></div></div>';
+    }).join('') + '</div>';
+  }
+  function porqueHtml(id) {
+    const c = nodo(id), ev = S.ev || [], propios = ev.filter((e) => e.camino_id === id);
+    const pad = c && c.parent_id ? ev.filter((e) => e.camino_id === c.parent_id) : [];
+    const hij = hijosDe(id).map((h) => h.id), des = ev.filter((e) => hij.indexOf(e.camino_id) >= 0);
+    const fila = (e, pre) => '<div class="ev"><b>' + (e.valor >= 0 ? 'A favor' : 'En contra') + ' · ' + esc(dimNombre(e.dimension)) + (pre ? ' · ' + pre : '') + '</b><p>' + esc(e.texto) + '</p></div>';
+    const lista = propios.map((e) => fila(e, '')).concat(pad.map((e) => fila(e, 'heredado de ' + esc(nodo(c.parent_id).nombre)))).concat(des.map((e) => fila(e, 'de una actividad concreta')));
+    return '<details><summary>Por qué encaja</summary>' + (lista.length ? lista.join('') : '<p class="vacio">Todavía no hay datos propios. El porcentaje parte de 50 %, que significa sin información.</p>') + '</details>';
+  }
+  function estadoSeg(c) {
+    const E = [['en_foco', 'En foco'], ['abierto', 'Abierto'], ['descartado', 'Descartado']];
+    return '<div class="seg" style="margin-top:10px">' + E.map((o) => '<button class="' + (c.estado === o[0] ? 'elegida' : '') + '" data-act="estado-camino" data-id="' + c.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>';
+  }
+  function tarjetaNodo(c, num) {
+    const a = af(c.id);
+    if (!a) return '';
+    const sub = c.nivel === 2 ? c.descripcion : c.razon;
+    return '<div class="item"><div class="cab"><b>' + (num ? num + '. ' : '') + esc(c.nombre) + '</b><b class="pct">' + a.afinidad + ' %</b></div><small>' + CONF[a.confianza] + ' · ' + deltaTxt(delta(c.id)) + (a.prioridad === 'baja' ? ' · En pausa' : '') + '</small>' +
+      (c.inesperado && c.razon_inesperada ? '<p>Quizá no lo habías considerado: ' + esc(c.razon_inesperada) + '</p>' : (sub ? '<p>' + esc(sub) + '</p>' : '')) + dimsHtml(a) + porqueHtml(c.id) + estadoSeg(c) + '</div>';
+  }
+  function balanceHtml() {
+    const B = S.balance || [], G = [['patron', 'Patrones'], ['contradiccion', 'Tensiones y contradicciones'], ['preferencia', 'Preferencias']];
+    let t = '<div class="tarjeta"><div class="etq">Balance</div><h3>Lo que sabemos de ti</h3><p class="sub">Un resumen de lo que has respondido hasta ahora.</p>';
+    if (!B.length) t += '<p class="vacio">Aún no hay balance.</p>';
+    G.forEach((g, i) => {
+      const m = B.filter((x) => x.tipo === g[0]);
+      if (!m.length) return;
+      t += '<details' + (i === 0 ? ' open' : '') + '><summary>' + g[1] + ' (' + m.length + ')</summary>' + m.map((x) => '<div class="item"><b>' + esc(x.texto) + '</b>' + (x.evidencia ? '<p>' + esc(x.evidencia) + '</p>' : '') + '</div>').join('') + '</details>';
+    });
+    return t + '</div>';
+  }
   function circuloSvg() {
-    const l = S.caminos || [], act = l.filter((x) => x.estado !== 'descartado'), des = l.filter((x) => x.estado === 'descartado'), n = act.length, tot = l.length;
+    const ints = (S.caminos || []).filter((c) => c.nivel === 1), act = ints.filter((c) => c.estado !== 'descartado' && AFV(c).prioridad !== 'baja'), des = ints.filter((c) => act.indexOf(c) < 0), n = act.length, tot = ints.length;
     const RMAX = 104, RMIN = 30, R = n <= 1 ? 0 : RMIN + (RMAX - RMIN) * (n - 1) / Math.max(tot - 1, 1);
     let g = '<circle class="aro" cx="150" cy="150" r="136"/><g class="cierra"><circle class="aro vivo" cx="150" cy="150" r="' + (n <= 1 ? 30 : R + 24) + '"/>';
     act.forEach((x, k) => {
-      const a = -Math.PI / 2 + 2 * Math.PI * k / Math.max(n, 1), px = n === 1 ? 150 : 150 + R * Math.cos(a), py = n === 1 ? 150 : 150 + R * Math.sin(a), foco = x.estado === 'en_foco', num = l.indexOf(x) + 1;
-      g += '<circle class="nodo' + (foco ? ' foco' : '') + '" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + (foco ? 16 : 12) + '"/><text class="nn" x="' + px.toFixed(1) + '" y="' + (py + 3.5).toFixed(1) + '" text-anchor="middle">' + num + '</text>';
+      const a = -Math.PI / 2 + 2 * Math.PI * k / Math.max(n, 1), px = n === 1 ? 150 : 150 + R * Math.cos(a), py = n === 1 ? 150 : 150 + R * Math.sin(a), foco = x.estado === 'en_foco', num = ints.indexOf(x) + 1;
+      const r = Math.max(9, Math.min(16, 9 + (AFV(x).afinidad - 45) / 3));
+      g += '<circle class="nodo' + (foco ? ' foco' : '') + '" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + r.toFixed(1) + '"/><text class="nn" x="' + px.toFixed(1) + '" y="' + (py + 3.5).toFixed(1) + '" text-anchor="middle">' + num + '</text>';
     });
-    if (n > 1) g += '<text class="cgran" x="150" y="152" text-anchor="middle">' + n + '</text><text class="cpeq" x="150" y="170" text-anchor="middle">caminos</text>';
+    if (n > 1) g += '<text class="cgran" x="150" y="152" text-anchor="middle">' + n + '</text><text class="cpeq" x="150" y="170" text-anchor="middle">intereses</text>';
     g += '</g>';
     des.forEach((x, k) => { const a = -Math.PI / 2 + 2 * Math.PI * (k + 0.5) / Math.max(des.length, 1); g += '<circle class="desc" cx="' + (150 + 136 * Math.cos(a)).toFixed(1) + '" cy="' + (150 + 136 * Math.sin(a)).toFixed(1) + '" r="5"/>'; });
-    return '<svg viewBox="0 0 300 300" role="img" aria-label="Círculo de caminos: quedan ' + n + ' de ' + tot + '">' + g + '</svg>';
+    return '<svg viewBox="0 0 300 300" role="img" aria-label="Círculo de intereses: quedan ' + n + ' de ' + tot + '">' + g + '</svg>';
   }
   function grafLineas() {
     const n = 8, x0 = 28, x1 = 282, y0 = 12, y1 = 140, ser = serie(n);
@@ -297,8 +365,8 @@
     });
     return t;
   }
-  const EXP = { a: null, b: null, c: null };
-  const PREG_EXP = [['a', '¿Perdiste la noción del tiempo?'], ['b', '¿Te dieron ganas de repetirlo?'], ['c', '¿Lo seguiste pensando después?']];
+  const EXP = { a: null, b: null, c: null, d: null };
+  const PREG_EXP = [['a', '¿Perdiste la noción del tiempo?'], ['b', '¿Te dieron ganas de repetirlo?'], ['c', '¿Lo seguiste pensando después?'], ['d', '¿Se te dio bien?']];
   const pendienteExp = () => (S.experimentos || []).filter((x) => x.estado === 'propuesto').slice(-1)[0];
   function escalaExp(k) {
     return '<div class="escala">' + [1, 2, 3, 4, 5, 6].map((v) => '<button class="' + (EXP[k] === v ? 'elegida' : '') + '" data-act="exp-nivel" data-k="' + k + '" data-v="' + v + '">' + v + '</button>').join('') + '</div><div class="extremos"><span>Nada</span><span>Muchísimo</span></div>';
@@ -317,27 +385,51 @@
     }
     if (hist.length) {
       t += '<div class="tarjeta"><h3>Experimentos hechos</h3>';
-      hist.slice().reverse().forEach((x) => { t += '<div class="item"><b>' + esc(x.titulo) + '</b><div class="chips"><span class="chip">Noción del tiempo ' + x.nocion + '</span><span class="chip">Ganas de repetir ' + x.ganas + '</span><span class="chip">Lo seguí pensando ' + x.pensado + '</span></div>' + (x.nota ? '<p>' + esc(x.nota) + '</p>' : '') + '</div>'; });
+      hist.slice().reverse().forEach((x) => { t += '<div class="item"><b>' + esc(x.titulo) + '</b><div class="chips"><span class="chip">Noción del tiempo ' + x.nocion + '</span><span class="chip">Ganas de repetir ' + x.ganas + '</span><span class="chip">Lo seguí pensando ' + x.pensado + '</span>' + (x.bien ? '<span class="chip">Se me dio bien ' + x.bien + '</span>' : '') + '</div>' + (x.nota ? '<p>' + esc(x.nota) + '</p>' : '') + '</div>'; });
       t += '</div>';
     }
     return t;
   }
   function vInicio() {
-    const l = S.caminos || [], vivos = l.filter((x) => x.estado !== 'descartado').length, foco = l.filter((x) => x.estado === 'en_foco');
+    const L = S.caminos || [], ints = L.filter((c) => c.nivel === 1), vivos = ints.filter((x) => x.estado !== 'descartado' && AFV(x).prioridad !== 'baja').length, foco = ints.filter((x) => x.estado === 'en_foco');
     const hip = (S.pistas || []).filter((x) => x.tipo === 'hipotesis' && !x.valoracion), ult = hip[hip.length - 1];
     const pend = (S.propuestas || []).filter((p) => p.respuesta == null).length, preg = PREGUNTAS[Math.floor(aFecha(hoy()).getTime() / 604800000) % PREGUNTAS.length];
+    const top = ordenAf(ints.filter((x) => x.estado !== 'descartado')).slice(0, 3), dudas = (S.dudas || []).slice(0, 3);
     let t = pend ? pendientesHtml() : '<div class="tarjeta"><div class="etq">Propuestas</div><h3>Estás al día</h3><p class="sub">No tienes propuestas pendientes. Cuando me escribas en el chat, prepararé nuevas.</p></div>';
     const ex = pendienteExp();
     if (ex) t = '<div class="tarjeta"><div class="etq">Experimento de la semana</div><h3>' + esc(ex.titulo) + '</h3><p class="sub">' + ex.duracion_min + ' minutos. ' + esc(ex.objetivo || '') + '</p><div class="acciones" style="margin-top:0"><button class="btn pri" data-ir="experimento">Abrir experimento</button></div></div>' + t;
-    t += '<div class="tarjeta"><div class="etq">El círculo</div><h2>' + (l.length ? 'Quedan ' + vivos + ' de ' + l.length : 'Sin caminos') + '</h2><p class="sub">' + (foco.length ? 'En foco: ' + esc(foco.map((x) => x.nombre).join(', ')) + '.' : 'Aún no hay ningún camino en foco.') + '</p><div class="acciones" style="margin-top:0"><button class="btn pri" data-ir="circulo">Ver el círculo</button></div></div>';
-    if (ult) t += '<div class="tarjeta"><div class="etq">Última hipótesis</div><h3>' + esc(ult.texto) + '</h3><p class="sub">Dime si te reconoces en ella.</p><div class="acciones" style="margin-top:0"><button class="btn" data-ir="retrato">Ver descubrimientos</button></div></div>';
+    t += '<div class="tarjeta"><div class="etq">Afinidad</div><h2>' + (ints.length ? 'Quedan ' + vivos + ' de ' + ints.length : 'Sin intereses') + '</h2><p class="sub">' + (foco.length ? 'En foco: ' + esc(foco.map((x) => x.nombre).join(', ')) + '.' : 'Aún no hay ningún interés en foco.') + '</p>' +
+      (top.length ? top.map((x) => '<div class="fila"><span>' + esc(x.nombre) + '</span><b>' + AFV(x).afinidad + ' %</b></div>').join('') : '') +
+      '<div class="acciones"><button class="btn pri" data-ir="circulo">Ver afinidad</button></div></div>';
+    if (dudas.length) t += '<div class="tarjeta"><div class="etq">Lo que necesito saber</div><h3>Dudas que más ayudan a afinar</h3>' + dudas.map((d) => '<p class="vacio" style="margin-top:8px">' + esc(d.pregunta) + '</p>').join('') + '<p class="sub" style="margin-top:12px">Te lo preguntaré en el chat o te propondré un experimento.</p></div>';
+    if (ult) t += '<div class="tarjeta"><div class="etq">Última hipótesis</div><h3>' + esc(ult.texto) + '</h3><p class="sub">Dime si te reconoces en ella.</p><div class="acciones" style="margin-top:0"><button class="btn" data-ir="retrato">Ver el balance</button></div></div>';
     t += '<div class="tarjeta"><div class="etq">Para reflexionar</div><h3>' + preg + '</h3><p class="vacio">Cuéntamelo en el chat.</p></div>';
     return t;
   }
   function vCirculo() {
-    const l = S.caminos || [], vivos = l.filter((x) => x.estado !== 'descartado'), n = vivos.length, c = (e) => l.filter((x) => x.estado === e).length;
-    const t = '<div class="tarjeta"><div class="etq">Círculo</div><h2>' + (n === 1 ? 'Queda un camino' : 'Tu círculo') + '</h2><p class="sub">' + (n === 1 ? esc(vivos[0].nombre) : 'Se va cerrando con tus respuestas hasta que quede un solo camino.') + '</p><div class="grafico">' + circuloSvg() + '</div><div class="chips"><span class="chip">Quedan ' + n + ' de ' + l.length + '</span><span class="chip">En foco ' + c('en_foco') + '</span><span class="chip">Descartados ' + c('descartado') + '</span></div></div>';
-    return t + caminosHtml();
+    const L = S.caminos || [], ramas = L.filter((c) => c.nivel === 0), ints = L.filter((c) => c.nivel === 1), acts = L.filter((c) => c.nivel === 2);
+    const vivos = ints.filter((c) => c.estado !== 'descartado' && AFV(c).prioridad !== 'baja'), pausa = ints.filter((c) => vivos.indexOf(c) < 0), foco = ints.filter((c) => c.estado === 'en_foco').length;
+    let t = '<div class="tarjeta"><div class="etq">Afinidad</div><h2>' + (vivos.length === 1 ? 'Queda un interés' : 'Tu círculo') + '</h2><p class="sub">' + (vivos.length === 1 ? esc(vivos[0].nombre) : 'Se estrecha con lo que descartas y crece con lo que descubrimos.') + '</p><div class="grafico">' + circuloSvg() + '</div><div class="chips"><span class="chip">Activos ' + vivos.length + ' de ' + ints.length + '</span><span class="chip">En foco ' + foco + '</span><span class="chip">En pausa ' + pausa.length + '</span></div></div>';
+    t += '<div class="tarjeta"><div class="etq">Ramas</div><h3>Qué ramas encajan más</h3><p class="sub">Estimaciones a partir de lo que sé de ti, con su confianza.</p>' +
+      ordenAf(ramas).map((r) => { const a = AFV(r); return '<div class="rank"><div class="tx"><span>' + esc(r.nombre) + '</span><b>' + a.afinidad + ' %</b></div><div class="barra-r"><i style="width:' + a.afinidad + '%"></i></div><small class="peq">' + CONF[a.confianza] + ' · ' + deltaTxt(delta(r.id)) + '</small></div>'; }).join('') + '</div>';
+    const ordI = ordenAf(vivos);
+    t += '<div class="tarjeta"><div class="etq">Intereses</div><h3>Ordenados por afinidad</h3><p class="sub">Cada interés se mide en cuatro dimensiones distintas. La pasión solo se da por comprobada con un experimento.</p>' + ordI.slice(0, 6).map((c) => tarjetaNodo(c, ints.indexOf(c) + 1)).join('') +
+      (ordI.length > 6 ? '<details><summary>Ver los ' + (ordI.length - 6) + ' intereses restantes</summary>' + ordI.slice(6).map((c) => tarjetaNodo(c, ints.indexOf(c) + 1)).join('') + '</details>' : '') + '</div>';
+    const ordA = ordenAf(acts.filter((c) => c.estado !== 'descartado' && AFV(c).prioridad !== 'baja'));
+    t += '<div class="tarjeta"><div class="etq">Actividades</div><h3>Qué podrías hacer en concreto</h3><p class="sub">Parten de lo que sé del interés al que pertenecen, y se afinan con experimentos.</p>' + ordA.slice(0, 5).map((c) => tarjetaNodo(c, 0)).join('') +
+      (ordA.length > 5 ? '<details><summary>Ver las ' + (ordA.length - 5) + ' actividades restantes</summary>' + ordA.slice(5).map((c) => tarjetaNodo(c, 0)).join('') + '</details>' : '') + '</div>';
+    const inesp = ordenAf(acts.filter((c) => c.inesperado && c.estado !== 'descartado')).slice(0, 5);
+    if (inesp.length) t += '<div class="tarjeta"><div class="etq">Por descubrir</div><h3>Quizá no lo habías considerado</h3><p class="sub">Ideas que encajan con lo que me has contado, aunque no las hayas pensado.</p>' + inesp.map((c) => '<div class="item"><div class="cab"><b>' + esc(c.nombre) + '</b><b class="pct">' + AFV(c).afinidad + ' %</b></div><p>' + esc(c.razon_inesperada || '') + '</p></div>').join('') + '</div>';
+    const mov = ramas.concat(ints).map((c) => ({ c: c, d: delta(c.id) })).filter((x) => x.d);
+    const subs = mov.filter((x) => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 3), baja = mov.filter((x) => x.d < 0).sort((a, b) => a.d - b.d).slice(0, 3);
+    t += '<div class="tarjeta"><div class="etq">Evolución</div><h3>Qué gana y qué pierde fuerza</h3>' + (mov.length ? '<h3 style="margin:12px 0 4px">Ganan fuerza</h3>' + (subs.length ? subs.map((x) => '<div class="fila"><span>' + esc(x.c.nombre) + '</span><b>' + deltaTxt(x.d) + '</b></div>').join('') : '<p class="vacio">Ninguno todavía.</p>') + '<h3 style="margin:14px 0 4px">Pierden fuerza</h3>' + (baja.length ? baja.map((x) => '<div class="fila"><span>' + esc(x.c.nombre) + '</span><b>' + deltaTxt(x.d) + '</b></div>').join('') : '<p class="vacio">Ninguno todavía.</p>') : '<p class="vacio">Aún no hay cambios medibles. Se verán según añadas respuestas y experimentos.</p>') + '</div>';
+    if (pausa.length) t += '<div class="tarjeta"><details style="margin-top:0"><summary style="border-top:0;padding:0">En pausa y descartados (' + pausa.length + ')</summary><p class="sub" style="margin-top:12px">Bajan de prioridad, pero no se borran: puedes recuperarlos cuando quieras.</p>' + pausa.map((c) => tarjetaNodo(c, ints.indexOf(c) + 1)).join('') + '</details></div>';
+    t += '<div class="tarjeta guia"><details><summary>Cómo calculo estos porcentajes</summary>' +
+      '<p>Cada porcentaje es una estimación, no una certeza. Parte de 50 %, que significa sin información, y se mueve con las evidencias que tengo de ti: lo que me has contado, tus respuestas a las propuestas y los experimentos.</p>' +
+      '<p>Cada evidencia tiene un peso: un experimento pesa más que una frase tuya, y una frase más que una respuesta a una propuesta. Lo que sé de una rama se hereda, más débil, a sus intereses y actividades.</p>' +
+      '<p>Se estiman por separado cuatro dimensiones: lo que te llama la atención, lo que se te da bien, lo que disfrutas y lo que podría apasionarte. La afinidad las combina, con más peso en el disfrute y en la pasión.</p>' +
+      '<p>La pasión solo se da por comprobada con experimentos. La confianza sube con la cantidad de evidencias. Un interés pasa a pausa solo con evidencias repetidas, nunca se borra, y descartar lo decides tú.</p></details></div>';
+    return t;
   }
   function vRegistro() {
     const opts = '<option value="">Ninguno</option>' + S.intereses.map((i) => '<option value="' + i.id + '">' + esc(i.nombre) + '</option>').join('');
@@ -388,18 +480,6 @@
     t += '<div class="tarjeta"><h3>Tu perfil base</h3>' + (et.length ? '<div class="chips">' + et.map((w) => '<span class="chip">' + esc(w) + '</span>').join('') + '</div>' : '<p class="vacio">Aún sin datos.</p>') + '</div>';
     return t;
   }
-  function caminosHtml() {
-    const l = S.caminos || [], E = [['en_foco', 'En foco'], ['abierto', 'Abierto'], ['descartado', 'Descartado']], G = [['en_foco', 'En foco'], ['abierto', 'Abiertos'], ['descartado', 'Descartados']];
-    let t = '<div class="tarjeta"><div class="etq">Caminos</div><h3>Los caminos y su estado</h3><p class="sub">Tú tienes la última palabra: cambia el estado si no estás de acuerdo.</p>';
-    if (!l.length) t += '<p class="vacio">Aún no hay caminos.</p>';
-    G.forEach((g) => {
-      const m = l.filter((x) => x.estado === g[0]);
-      if (!m.length) return;
-      t += '<h3 style="margin:18px 0 8px">' + g[1] + '</h3>';
-      m.forEach((x) => { t += '<div class="item"><b>' + (l.indexOf(x) + 1) + '. ' + esc(x.nombre) + '</b>' + (x.razon ? '<p>' + esc(x.razon) + '</p>' : '') + '<div class="seg">' + E.map((o) => '<button class="' + (x.estado === o[0] ? 'elegida' : '') + '" data-act="estado-camino" data-id="' + x.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div></div>'; });
-    });
-    return t + '</div>';
-  }
   function itemPista(x, botones) {
     return '<div class="item"><b>' + esc(x.texto) + '</b>' + (x.evidencia ? '<p>' + esc(x.evidencia) + '</p>' : '') + (botones ? '<div class="seg">' + [['me_reconozco', 'Me reconozco'], ['no_exactamente', 'No exactamente']].map((o) => '<button class="' + (x.valoracion === o[0] ? 'elegida' : '') + '" data-act="valorar-pista" data-id="' + x.id + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>' : '') + '</div>';
   }
@@ -415,17 +495,18 @@
   }
   function guiaHtml() {
     return '<div class="tarjeta guia"><details><summary>Guía de IKI: qué hace cada sección</summary>' +
-      '<p><b>Inicio.</b> Tu resumen: propuestas pendientes, estado del círculo, la última hipótesis y una pregunta para reflexionar.</p>' +
-      '<p><b>Propuestas.</b> Es lo principal. Claude te propone algo concreto y tú respondes de 1 (no estoy de acuerdo) a 6 (muy de acuerdo). No hay punto medio. Tus respuestas cierran el círculo.</p>' +
-      '<p><b>Círculo.</b> Todos los caminos posibles dentro de un círculo que se va cerrando hasta que quede uno. Cada camino puede estar en foco, abierto o descartado, y puedes cambiarlo tú.</p>' +
-      '<p><b>Retrato.</b> Las hipótesis que Claude saca de tus respuestas: marca Me reconozco o No exactamente. Aquí están también tus datos, las herramientas opcionales y tu cuenta.</p>' +
-      '<p><b>Experimento.</b> Cada semana Claude te propone un experimento de una hora para probar algo de verdad. Al terminar cuentas cómo te fue con tres preguntas de 1 a 6. Aparece en Inicio.</p>' +
-      '<p><b>Cómo usarla.</b> Responde las propuestas, contesta en el chat las preguntas de Claude y haz el experimento de la semana. De vez en cuando revisa las hipótesis del Retrato y mira cómo evoluciona el círculo.</p>' +
+      '<p><b>Inicio.</b> Tu resumen: el experimento de la semana, las propuestas pendientes, lo que más encaja contigo, las dudas que más ayudan a afinar y la última hipótesis.</p>' +
+      '<p><b>Propuestas.</b> Claude te propone algo concreto y tú respondes de 1 (no estoy de acuerdo) a 6 (muy de acuerdo). No hay punto medio. Tus respuestas mueven las afinidades.</p>' +
+      '<p><b>Afinidad.</b> El círculo de intereses, el ranking de ramas, intereses y actividades concretas con su porcentaje, lo que encaja y por qué, las ideas por descubrir y cómo evolucionan. Cada interés se mide en cuatro dimensiones: atención, habilidad, disfrute y pasión.</p>' +
+      '<p><b>Balance.</b> Es esta sección, Retrato: patrones, tensiones y preferencias que Claude ha detectado, y las hipótesis para que marques Me reconozco o No exactamente.</p>' +
+      '<p><b>Experimento.</b> Cada semana Claude te propone un experimento de una hora para probar algo de verdad. Al terminar contestas cuatro preguntas de 1 a 6. Es lo que más pesa para saber si algo te apasiona.</p>' +
+      '<p><b>Cómo usarla.</b> Responde las propuestas, contesta en el chat las preguntas de Claude y haz el experimento de la semana. Revisa de vez en cuando el balance y mira cómo cambia la afinidad.</p>' +
       '<p><b>Opcionales.</b> Mis actividades, el diario de registro y los patrones están en Más herramientas. No hace falta usarlos.</p>' +
       '</details></div>';
   }
   function vRetrato() {
-    let t = '<div class="tarjeta"><div class="etq">Retrato</div><h2>Tu retrato</h2><p class="sub">Lo que voy descubriendo de ti a partir de tus respuestas.</p></div>';
+    let t = '<div class="tarjeta"><div class="etq">Retrato</div><h2>Balance general</h2><p class="sub">Lo que sabemos de ti hasta ahora: patrones, tensiones y preferencias.</p></div>';
+    t += balanceHtml();
     t += pistasHtml();
     t += '<div class="tarjeta"><h3>Más herramientas</h3><p class="sub">Opcionales, por si algún día te sirven.</p><div class="acciones" style="flex-direction:column;margin-top:0"><button class="btn" data-ir="explorar">Mis actividades</button><button class="btn" data-ir="registro">Diario de registro</button><button class="btn" data-ir="patrones">Patrones de mis registros</button><a class="btn" href="perfil.html">Perfil base: enlace y nudo</a></div></div>';
     t += guiaHtml();
@@ -471,9 +552,9 @@
     'exp-guardar': () => {
       const x = pendienteExp();
       if (!x) return;
-      if (EXP.a == null || EXP.b == null || EXP.c == null) { estado('Responde las tres preguntas'); return; }
+      if (EXP.a == null || EXP.b == null || EXP.c == null || EXP.d == null) { estado('Responde las cuatro preguntas'); return; }
       const nota = val('exp-nota') || null;
-      guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'hecho', nocion: EXP.a, ganas: EXP.b, pensado: EXP.c, nota: nota, hecho_at: new Date().toISOString() }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); EXP.a = EXP.b = EXP.c = null; }, ['exp-nota']);
+      guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'hecho', nocion: EXP.a, ganas: EXP.b, pensado: EXP.c, bien: EXP.d, nota: nota, hecho_at: new Date().toISOString() }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); EXP.a = EXP.b = EXP.c = EXP.d = null; }, ['exp-nota']);
     },
     'exp-omitir': () => { const x = pendienteExp(); if (x && confirm('¿Omitir este experimento?')) guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'omitido' }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); }); },
     'recargar': () => cargar(),
@@ -508,7 +589,22 @@
       S.resp = [{ pregunta_id: 'x', etiquetas: ['moderno', 'técnico', 'sobrio', 'moderno'], fase: 'enlace' }];
       S.propuestas = [{ id: 'q1', texto: 'Me atrae la idea de dedicarme a la ciberseguridad.', razon: 'Une retos que se resuelven y que funcionan con ataque y defensa.', respuesta: null }, { id: 'q2', texto: 'Prefiero trabajar en equipo con personas cercanas antes que trabajar solo.', razon: 'Tu paz la recuerdas con personas cercanas.', respuesta: 5 }];
       S.experimentos = [{ id: 'x1', titulo: 'Crear un mini-juego en una hora', objetivo: 'Comprobar si crear algo propio, aunque sea pequeño, te absorbe y te dan ganas de seguir.', pasos: 'Abre el mini-juego de partida y juégalo dos minutos.\nCambia la historia: quién es el héroe y qué debe salvar.\nCambia una regla.', duracion_min: 60, recurso_url: 'experimentos/mini-juego.html', recurso_texto: 'Abrir el mini-juego de partida', estado: 'propuesto' }, { id: 'x0', titulo: 'Dibujar un personaje', estado: 'hecho', nocion: 5, ganas: 4, pensado: 3, nota: 'Se me pasó el tiempo.' }];
-      S.caminos = [{ id: 'c1', nombre: 'Ciberseguridad', razon: 'Une resolver retos que funcionan con ataque y defensa.', estado: 'en_foco' }, { id: 'c2', nombre: 'Dibujar o ilustrar', razon: 'Dibujabas durante horas buscando concentración y tranquilidad.', estado: 'abierto' }, { id: 'c3', nombre: 'Entrenar y el deporte', razon: 'Te interesa entrenar, aunque te cuesta mantenerlo.', estado: 'descartado' }, { id: 'c4', nombre: 'Sistemas y servidores', razon: 'Te gusta resolver algo y que funcione.', estado: 'abierto' }, { id: 'c5', nombre: 'Crear videojuegos', razon: 'Disfrutas de la historia y el reto.', estado: 'abierto' }, { id: 'c6', nombre: 'Enseñar informática', razon: 'Respondiste 2 de 6.', estado: 'descartado' }, { id: 'c7', nombre: 'Música o guitarra', razon: 'La guitarra puede darte calma.', estado: 'abierto' }];
+      const nd = (id, nombre, nivel, parent, estado, extra) => Object.assign({ id: id, nombre: nombre, nivel: nivel, parent_id: parent, estado: estado }, extra || {});
+      S.caminos = [nd('r1', 'Tecnología y sistemas', 0, null, 'abierto'), nd('r2', 'Arte y creación', 0, null, 'abierto'), nd('r3', 'Historias y mundos', 0, null, 'abierto'),
+        nd('i1', 'Ciberseguridad', 1, 'r1', 'abierto', { razon: 'Te atrae como idea, aún sin probar.' }), nd('i2', 'Sistemas y servidores', 1, 'r1', 'en_foco', { razon: 'Te gusta resolver algo y que funcione.' }),
+        nd('i3', 'Dibujar o ilustrar', 1, 'r2', 'abierto', { razon: 'Dibujabas durante horas.' }), nd('i4', 'Enseñar informática', 1, 'r1', 'descartado', { razon: 'Respondiste 2 de 6.' }),
+        nd('i5', 'Entrenar y el deporte', 1, 'r2', 'abierto', { razon: 'Te interesa entrenar.' }), nd('i6', 'Jugar y analizar videojuegos', 1, 'r3', 'abierto', { razon: 'Lo mantienes sin esfuerzo.' }), nd('i7', 'Escribir historias', 1, 'r3', 'abierto', { razon: 'Imaginas escenarios cada noche.' }),
+        nd('a1', 'Resolver retos de ciberseguridad tipo CTF para principiantes', 2, 'i1', 'abierto', { descripcion: 'Retos guiados con una pista y un resultado.' }),
+        nd('a2', 'Hacer pixel art o animaciones cortas', 2, 'i3', 'abierto', { descripcion: 'Dibujo con reglas claras.', inesperado: true, razon_inesperada: 'Une dibujar con trastear y con los videojuegos.' })];
+      const fa = (id, a, h, d, p, f, w, c, pc, pr) => ({ camino_id: id, afinidad: f, atencion: a, habilidad: h, disfrute: d, pasion: p, w_atencion: w[0], w_habilidad: w[1], w_disfrute: w[2], w_pasion: w[3], peso_total: w[0] + w[1] + w[2] + w[3], confianza: c, pasion_comprobada: pc, prioridad: pr });
+      S.afin = [fa('r1', 57, 65, 68, 58, 62, [3, 2, 3, 1], 'media', false, 'alta'), fa('r2', 62, 50, 65, 50, 56, [2, 0, 2, 0], 'media', false, 'media'), fa('r3', 67, 50, 75, 50, 60, [3, 0, 4, 0], 'media', false, 'media'),
+        fa('i1', 59, 57, 63, 54, 58, [1.5, 1, 1, 0.5], 'baja', false, 'media'), fa('i2', 50, 57, 63, 54, 57, [0, 1, 1, 0.5], 'baja', false, 'media'), fa('i3', 66, 50, 63, 50, 56, [3, 0, 2, 0], 'media', false, 'media'),
+        fa('i4', 50, 50, 41, 50, 47, [0, 0, 1, 0], 'baja', false, 'media'), fa('i5', 67, 50, 50, 50, 53, [2.5, 0, 0, 0], 'baja', false, 'media'), fa('i6', 67, 50, 78, 50, 61, [2, 0, 3.5, 0], 'media', false, 'media'), fa('i7', 64, 50, 65, 50, 57, [2.5, 0, 2, 0], 'media', false, 'media'),
+        fa('a1', 54, 53, 56, 51, 53, [0.5, 0.3, 0.3, 0.2], 'baja', false, 'media'), fa('a2', 60, 50, 56, 50, 53, [1, 0, 1, 0], 'baja', false, 'media')];
+      S.ev = [{ camino_id: 'r1', dimension: 'habilidad', valor: 0.7, texto: 'Los demás te llaman por tus conocimientos de informática cuando ellos no los tienen.' }, { camino_id: 'r1', dimension: 'disfrute', valor: 0.7, texto: 'Dijiste que trastear con informática te gusta mucho, y más con amigos.' }, { camino_id: 'i1', dimension: 'atencion', valor: 0.6, texto: 'Propuesta: Me atrae la idea de dedicarme a la ciberseguridad. Respondiste 5 de 6.' }, { camino_id: 'i4', dimension: 'disfrute', valor: -0.8, texto: 'Propuesta: Disfrutaría enseñando informática. Respondiste 2 de 6.' }];
+      S.evol = [{ camino_id: 'i1', momento: '2026-10-25T23:00:00Z', afinidad: 54 }, { camino_id: 'i1', momento: '2026-10-31T23:00:00Z', afinidad: 58 }, { camino_id: 'i4', momento: '2026-10-25T23:00:00Z', afinidad: 50 }, { camino_id: 'i4', momento: '2026-10-31T23:00:00Z', afinidad: 47 }, { camino_id: 'r1', momento: '2026-10-25T23:00:00Z', afinidad: 60 }, { camino_id: 'r1', momento: '2026-10-31T23:00:00Z', afinidad: 62 }];
+      S.dudas = [{ camino_id: 'i2', nombre: 'Sistemas y servidores', dimension: 'atencion', pregunta: 'Falta saber si Sistemas y servidores te llama la atención de verdad.' }, { camino_id: 'i1', nombre: 'Ciberseguridad', dimension: 'pasion', pregunta: 'Falta comprobar en la práctica si Ciberseguridad te apasiona: conviene un experimento de una hora.' }];
+      S.balance = [{ tipo: 'patron', texto: 'Lo que más te llena es resolver algo hasta que funciona.', evidencia: 'Dijiste que te pasa muy a menudo y te sientes orgulloso.' }, { tipo: 'contradiccion', texto: 'Quieres superarte, pero tu paz llega cuando no tienes nada que demostrar.', evidencia: 'Tu héroe se supera y tu paz está con personas cercanas.' }, { tipo: 'preferencia', texto: 'Te importa más la paz que un gran éxito.', evidencia: 'Respondiste 5 de 6.' }];
       S.pistas = [{ id: 'p1', texto: 'Buscas un estado de concentración y calma más que un resultado.', evidencia: 'Al dibujar buscabas concentración, tranquilidad y pasar el rato.', tipo: 'hipotesis', valoracion: 'me_reconozco' }, { id: 'p2', texto: 'Las historias y los mundos son un hilo común en lo que te atrae.', evidencia: 'Disfrutas de la historia y de explorar mundos en los videojuegos.', tipo: 'hipotesis', valoracion: null }, { id: 'p3', texto: 'Te gusta resolver algo y que funcione.', evidencia: 'Lo dijiste con claridad.', tipo: 'dato', valoracion: null }];
       cargando = false; fallo = false; pintar(false);
     }
