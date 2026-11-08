@@ -117,6 +117,7 @@
   .pct, .rank .tx b, .fila b { white-space: nowrap; }
   .pct { font-size: 1.1rem; }
   .peq { display: block; margin-top: 4px; color: var(--suave); font-size: .78rem; }
+  .hero { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent), var(--sombra); }
   .rank { margin-top: 12px; }
   .rank .tx { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; margin-bottom: 5px; }
   .rank .tx span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -135,7 +136,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.13</span><button class="mini" data-act="salir">Salir</button></div></div>
+  <div class="top"><div class="marca">IKI</div><div class="der"><span id="estado"></span><span id="version">V1.14</span><button class="mini" data-act="salir">Salir</button></div></div>
   <div id="pantalla"></div>
 </div>
 <nav class="nav"><div class="nav-in" id="nav"></div></nav>
@@ -145,7 +146,7 @@
   'use strict';
   const BASE = 'https://xylwfdqvcxlrkjohlgig.supabase.co/rest/v1/';
 
-  const S = { registros: [], intereses: [], retrato: [], resp: [], pistas: [], caminos: [], propuestas: [], experimentos: [], afin: [], ev: [], evol: [], dudas: [], balance: [] };
+  const S = { registros: [], intereses: [], retrato: [], resp: [], pistas: [], caminos: [], propuestas: [], experimentos: [], afin: [], ev: [], evol: [], dudas: [], balance: [], motiv: [], motivEv: [], encaje: [], senales: [], hip: [], desc: [], descCam: [] };
   let vista = 'inicio', cargando = true, fallo = false;
 
   const $ = (s) => document.querySelector(s);
@@ -207,9 +208,16 @@
         api('GET', 'iki_ev', 'select=*&order=creado.desc'),
         api('GET', 'iki_evolucion_v', 'select=*'),
         api('GET', 'iki_dudas', 'select=*'),
-        api('GET', 'iki_balance', 'select=*&order=created_at.asc')
+        api('GET', 'iki_balance', 'select=*&order=created_at.asc'),
+        api('GET', 'iki_motiv', 'select=*'),
+        api('GET', 'iki_encaje', 'select=*'),
+        api('GET', 'iki_senales', 'select=*'),
+        api('GET', 'iki_hipotesis', 'select=*&estado=eq.abierta&order=created_at.asc'),
+        api('GET', 'iki_descubrimientos', 'select=*&order=created_at.desc'),
+        api('GET', 'iki_descubrimiento_camino', 'select=*'),
+        api('GET', 'iki_motiv_ev', 'select=motivacion_id,valor,texto,senal')
       ]);
-      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3]; S.pistas = r[4]; S.caminos = r[5]; S.propuestas = r[6]; S.experimentos = r[7]; S.afin = r[8]; S.ev = r[9]; S.evol = r[10]; S.dudas = r[11]; S.balance = r[12];
+      S.registros = r[0]; S.intereses = r[1]; S.retrato = r[2]; S.resp = r[3]; S.pistas = r[4]; S.caminos = r[5]; S.propuestas = r[6]; S.experimentos = r[7]; S.afin = r[8]; S.ev = r[9]; S.evol = r[10]; S.dudas = r[11]; S.balance = r[12]; S.motiv = r[13]; S.encaje = r[14]; S.senales = r[15]; S.hip = r[16]; S.desc = r[17]; S.descCam = r[18]; S.motivEv = r[19];
     } catch (e) { fallo = true; }
     cargando = false; pintar(false);
   }
@@ -373,7 +381,7 @@
   }
   function vExperimento() {
     const act = pendienteExp(), hist = (S.experimentos || []).filter((x) => x.estado === 'hecho');
-    let t = '<div class="tarjeta"><div class="etq">Experimento</div><h2>' + (act ? 'Esta semana' : 'Sin experimento') + '</h2>';
+    let t = seguimientoHtml() + '<div class="tarjeta"><div class="etq">Experimento</div><h2>' + (act ? 'Esta semana' : 'Sin experimento') + '</h2>';
     if (!act) t += '<p class="sub">No hay ningún experimento pendiente. Pídele a Claude el de esta semana en el chat.</p></div>';
     else {
       t += '<p class="sub">' + esc(act.titulo) + ' · ' + act.duracion_min + ' minutos</p>' + (act.objetivo ? '<p class="vacio">' + esc(act.objetivo) + '</p>' : '');
@@ -385,23 +393,78 @@
     }
     if (hist.length) {
       t += '<div class="tarjeta"><h3>Experimentos hechos</h3>';
-      hist.slice().reverse().forEach((x) => { t += '<div class="item"><b>' + esc(x.titulo) + '</b><div class="chips"><span class="chip">Noción del tiempo ' + x.nocion + '</span><span class="chip">Ganas de repetir ' + x.ganas + '</span><span class="chip">Lo seguí pensando ' + x.pensado + '</span>' + (x.bien ? '<span class="chip">Se me dio bien ' + x.bien + '</span>' : '') + '</div>' + (x.nota ? '<p>' + esc(x.nota) + '</p>' : '') + '</div>'; });
+      hist.slice().reverse().forEach((x) => { t += '<div class="item"><b>' + esc(x.titulo) + '</b><div class="chips"><span class="chip">Noción del tiempo ' + x.nocion + '</span><span class="chip">Ganas de repetir ' + x.ganas + '</span><span class="chip">Lo seguí pensando ' + x.pensado + '</span>' + (x.bien ? '<span class="chip">Se me dio bien ' + x.bien + '</span>' : '') + (x.retomado ? '<span class="chip">Lo retomé ' + x.retomado + '</span>' : '') + '</div>' + (x.nota ? '<p>' + esc(x.nota) + '</p>' : '') + '</div>'; });
       t += '</div>';
     }
     return t;
+  }
+  const OBJ = { confirmar: 'Para confirmar', descartar: 'Para descartar', descubrir: 'Para descubrir', profundizar: 'Para profundizar' };
+  const SENALES = [['tiempo', 'Pierdes la noción del tiempo'], ['investiga', 'Investigas por tu cuenta'], ['repite', 'Repites sin que nadie te obligue'], ['detalles', 'Te fascinan detalles que a otros no'], ['infancia', 'Lo disfrutabas de pequeño'], ['verguenza', 'Te da vergüenza reconocerlo'], ['mejorar', 'Mejoras por puro placer'], ['sin_recompensa', 'Lo harías sin dinero ni reconocimiento']];
+  async function refrescaAfin() {
+    try {
+      const r = await Promise.all([api('GET', 'iki_afinidad', 'select=*'), api('GET', 'iki_ev', 'select=*&order=creado.desc'), api('GET', 'iki_evolucion_v', 'select=*'), api('GET', 'iki_dudas', 'select=*'), api('GET', 'iki_motiv', 'select=*'), api('GET', 'iki_encaje', 'select=*'), api('GET', 'iki_senales', 'select=*')]);
+      S.afin = r[0]; S.ev = r[1]; S.evol = r[2]; S.dudas = r[3]; S.motiv = r[4]; S.encaje = r[5]; S.senales = r[6];
+      pintar(false);
+    } catch (e) { /* si falla, se verá al recargar */ }
+  }
+  function seguimientoHtml() {
+    const lim = Date.now() - 5 * 86400000;
+    const x = (S.experimentos || []).filter((e) => e.estado === 'hecho' && e.retomado == null && e.hecho_at && Date.parse(e.hecho_at) < lim)[0];
+    if (!x) return '';
+    return '<div class="tarjeta"><div class="etq">Seguimiento</div><h3>¿Lo has retomado por tu cuenta?</h3><p class="sub">Hace unos días hiciste «' + esc(x.titulo) + '». La emoción de probar algo nuevo no es lo mismo que una pasión: lo que cuenta es si has vuelto a hacerlo sin que nadie te obligara.</p><div class="escala">' + [1, 2, 3, 4, 5, 6].map((v) => '<button data-act="seg-guardar" data-id="' + x.id + '" data-v="' + v + '">' + v + '</button>').join('') + '</div><div class="extremos"><span>Nada</span><span>Muchísimo</span></div></div>';
+  }
+  function descubrimientoHtml() {
+    const d = (S.desc || []).filter((x) => x.estado === 'nuevo')[0];
+    if (!d) return '';
+    const enl = (S.descCam || []).filter((e) => e.descubrimiento_id === d.id), pri = enl.filter((e) => e.principal)[0], otras = enl.filter((e) => !e.principal);
+    const nm = (id) => (nodo(id) || { nombre: '' }).nombre;
+    let t = '<div class="tarjeta hero"><div class="etq">Descubrimiento</div><h2>' + esc(d.titulo) + '</h2><p class="vacio" style="margin-top:10px">' + esc(d.patron) + '</p>';
+    if (pri) t += '<div class="item"><b>' + esc(nm(pri.camino_id)) + '</b><p>' + esc(pri.relacion) + '</p></div>';
+    if (otras.length) t += '<p class="sub" style="margin-top:14px">Otras que encajan por lo mismo:</p>' + otras.map((e) => '<div class="fila"><span>' + esc(nm(e.camino_id)) + '</span></div><p class="vacio" style="margin:2px 0 8px">' + esc(e.relacion) + '</p>').join('');
+    if (d.cierre) t += '<p class="sub" style="margin-top:14px">' + esc(d.cierre) + '</p>';
+    t += '<h3 style="margin:14px 0 4px">¿Cuánta curiosidad te despierta la primera?</h3><div class="escala">' + [1, 2, 3, 4, 5, 6].map((v) => '<button data-act="reaccion-desc" data-id="' + d.id + '" data-v="' + v + '">' + v + '</button>').join('') + '</div><div class="extremos"><span>Ninguna</span><span>Muchísima</span></div></div>';
+    return t;
+  }
+  function hipotesisHtml() {
+    const l = (S.hip || []).slice(0, 3);
+    if (!l.length) return '';
+    return '<div class="tarjeta"><div class="etq">Investigando</div><h3>Lo que estoy comprobando ahora</h3><p class="sub">Cada pregunta que te hago sirve a una hipótesis.</p>' + l.map((h) => '<div class="item"><b>' + esc(h.texto) + '</b><p>' + (OBJ[h.objetivo] || '') + ': ' + esc(h.pregunta || '') + '</p></div>').join('') + '</div>';
+  }
+  function motivHtml() {
+    const M = (S.motiv || []).slice().sort((a, b) => b.score - a.score || b.peso - a.peso), evs = S.motivEv || [];
+    const fila = (m) => {
+      const e = evs.filter((x) => x.motivacion_id === m.motivacion_id), sin = !m.peso;
+      return '<div class="item"><div class="cab"><b>' + esc(m.nombre) + '</b><b class="pct">' + (sin ? 'Sin datos' : m.score + ' %') + '</b></div><small>' + esc(m.descripcion) + (sin ? '' : ' · ' + CONF[m.confianza]) + '</small>' + (sin ? '' : '<div class="barra-r" style="margin-top:8px"><i style="width:' + m.score + '%"></i></div>') +
+        '<details><summary>Por qué</summary>' + (e.length ? e.map((x) => '<div class="ev"><b>' + (x.valor >= 0 ? 'A favor' : 'En contra') + '</b><p>' + esc(x.texto) + '</p></div>').join('') : '<p class="vacio">Todavía no hay datos. Lo investigaré con preguntas y experimentos.</p>') + '</details></div>';
+    };
+    return '<div class="tarjeta"><div class="etq">Qué te mueve</div><h3>Tus motivaciones</h3><p class="sub">Detrás de una actividad hay una razón. Dos personas pueden entrenar igual por motivos distintos.</p>' + M.slice(0, 6).map(fila).join('') + (M.length > 6 ? '<details><summary>Ver las ' + (M.length - 6) + ' motivaciones restantes</summary>' + M.slice(6).map(fila).join('') + '</details>' : '') + '</div>';
+  }
+  function sabemosHtml() {
+    const M = (S.motiv || []).filter((m) => m.confianza !== 'baja' && m.score >= 60).sort((a, b) => b.score - a.score).slice(0, 4);
+    const ints = ordenAf((S.caminos || []).filter((c) => c.nivel === 1 && c.estado !== 'descartado' && AFV(c).confianza !== 'baja' && AFV(c).afinidad >= 56)).slice(0, 3);
+    const sin = (S.motiv || []).filter((m) => !m.peso).map((m) => m.nombre), dudas = (S.dudas || []).slice(0, 3);
+    let t = '<div class="tarjeta"><div class="etq">Certeza</div><h3>Qué sabemos y qué falta</h3><p class="sub">La confianza es distinta del porcentaje: una cifra alta con poca evidencia sigue siendo una duda.</p><h3 style="margin:12px 0 4px">Con bastante seguridad</h3>';
+    t += (M.length || ints.length) ? M.map((m) => '<div class="fila"><span>' + esc(m.nombre) + '</span><b>' + m.score + ' %</b></div>').join('') + ints.map((c) => '<div class="fila"><span>' + esc(c.nombre) + '</span><b>' + AFV(c).afinidad + ' %</b></div>').join('') : '<p class="vacio">Todavía poco: hacen falta más evidencias.</p>';
+    t += '<h3 style="margin:14px 0 4px">Por investigar</h3>' + dudas.map((d) => '<p class="vacio" style="margin:6px 0">' + esc(d.pregunta) + '</p>').join('') + (sin.length ? '<p class="vacio" style="margin:6px 0">Motivaciones sin datos aún: ' + esc(sin.join(', ')) + '.</p>' : '');
+    return t + '</div>';
+  }
+  function senalesHtml() {
+    const n = (k) => ((S.senales || []).filter((s) => s.senal === k)[0] || { n: 0 }).n;
+    return '<div class="tarjeta"><div class="etq">Señales</div><h3>Señales de una pasión real</h3><p class="sub">Lo que suele delatar una fascinación verdadera. Las busco en tus respuestas y en lo que me cuentes.</p>' + SENALES.map((s) => '<div class="fila"><span>' + s[1] + '</span><b>' + (n(s[0]) ? n(s[0]) + (n(s[0]) === 1 ? ' detectada' : ' detectadas') : 'Por investigar') + '</b></div>').join('') + '</div>';
   }
   function vInicio() {
     const L = S.caminos || [], ints = L.filter((c) => c.nivel === 1), vivos = ints.filter((x) => x.estado !== 'descartado' && AFV(x).prioridad !== 'baja').length, foco = ints.filter((x) => x.estado === 'en_foco');
     const hip = (S.pistas || []).filter((x) => x.tipo === 'hipotesis' && !x.valoracion), ult = hip[hip.length - 1];
     const pend = (S.propuestas || []).filter((p) => p.respuesta == null).length, preg = PREGUNTAS[Math.floor(aFecha(hoy()).getTime() / 604800000) % PREGUNTAS.length];
-    const top = ordenAf(ints.filter((x) => x.estado !== 'descartado')).slice(0, 3), dudas = (S.dudas || []).slice(0, 3);
-    let t = pend ? pendientesHtml() : '<div class="tarjeta"><div class="etq">Propuestas</div><h3>Estás al día</h3><p class="sub">No tienes propuestas pendientes. Cuando me escribas en el chat, prepararé nuevas.</p></div>';
+    const top = ordenAf(ints.filter((x) => x.estado !== 'descartado')).slice(0, 3);
+    let t = seguimientoHtml() + descubrimientoHtml();
     const ex = pendienteExp();
-    if (ex) t = '<div class="tarjeta"><div class="etq">Experimento de la semana</div><h3>' + esc(ex.titulo) + '</h3><p class="sub">' + ex.duracion_min + ' minutos. ' + esc(ex.objetivo || '') + '</p><div class="acciones" style="margin-top:0"><button class="btn pri" data-ir="experimento">Abrir experimento</button></div></div>' + t;
+    if (ex) t += '<div class="tarjeta"><div class="etq">Experimento de la semana</div><h3>' + esc(ex.titulo) + '</h3><p class="sub">' + ex.duracion_min + ' minutos. ' + esc(ex.objetivo || '') + '</p><div class="acciones" style="margin-top:0"><button class="btn pri" data-ir="experimento">Abrir experimento</button></div></div>';
+    t += pend ? pendientesHtml() : '<div class="tarjeta"><div class="etq">Propuestas</div><h3>Estás al día</h3><p class="sub">No tienes propuestas pendientes. Cuando me escribas en el chat, prepararé nuevas.</p></div>';
+    t += hipotesisHtml();
     t += '<div class="tarjeta"><div class="etq">Afinidad</div><h2>' + (ints.length ? 'Quedan ' + vivos + ' de ' + ints.length : 'Sin intereses') + '</h2><p class="sub">' + (foco.length ? 'En foco: ' + esc(foco.map((x) => x.nombre).join(', ')) + '.' : 'Aún no hay ningún interés en foco.') + '</p>' +
       (top.length ? top.map((x) => '<div class="fila"><span>' + esc(x.nombre) + '</span><b>' + AFV(x).afinidad + ' %</b></div>').join('') : '') +
       '<div class="acciones"><button class="btn pri" data-ir="circulo">Ver afinidad</button></div></div>';
-    if (dudas.length) t += '<div class="tarjeta"><div class="etq">Lo que necesito saber</div><h3>Dudas que más ayudan a afinar</h3>' + dudas.map((d) => '<p class="vacio" style="margin-top:8px">' + esc(d.pregunta) + '</p>').join('') + '<p class="sub" style="margin-top:12px">Te lo preguntaré en el chat o te propondré un experimento.</p></div>';
     if (ult) t += '<div class="tarjeta"><div class="etq">Última hipótesis</div><h3>' + esc(ult.texto) + '</h3><p class="sub">Dime si te reconoces en ella.</p><div class="acciones" style="margin-top:0"><button class="btn" data-ir="retrato">Ver el balance</button></div></div>';
     t += '<div class="tarjeta"><div class="etq">Para reflexionar</div><h3>' + preg + '</h3><p class="vacio">Cuéntamelo en el chat.</p></div>';
     return t;
@@ -412,16 +475,18 @@
     let t = '<div class="tarjeta"><div class="etq">Afinidad</div><h2>' + (vivos.length === 1 ? 'Queda un interés' : 'Tu círculo') + '</h2><p class="sub">' + (vivos.length === 1 ? esc(vivos[0].nombre) : 'Se estrecha con lo que descartas y crece con lo que descubrimos.') + '</p><div class="grafico">' + circuloSvg() + '</div><div class="chips"><span class="chip">Activos ' + vivos.length + ' de ' + ints.length + '</span><span class="chip">En foco ' + foco + '</span><span class="chip">En pausa ' + pausa.length + '</span></div></div>';
     t += '<div class="tarjeta"><div class="etq">Ramas</div><h3>Qué ramas encajan más</h3><p class="sub">Estimaciones a partir de lo que sé de ti, con su confianza.</p>' +
       ordenAf(ramas).map((r) => { const a = AFV(r); return '<div class="rank"><div class="tx"><span>' + esc(r.nombre) + '</span><b>' + a.afinidad + ' %</b></div><div class="barra-r"><i style="width:' + a.afinidad + '%"></i></div><small class="peq">' + CONF[a.confianza] + ' · ' + deltaTxt(delta(r.id)) + '</small></div>'; }).join('') + '</div>';
+    t += motivHtml();
     const ordI = ordenAf(vivos);
     t += '<div class="tarjeta"><div class="etq">Intereses</div><h3>Ordenados por afinidad</h3><p class="sub">Cada interés se mide en cuatro dimensiones distintas. La pasión solo se da por comprobada con un experimento.</p>' + ordI.slice(0, 6).map((c) => tarjetaNodo(c, ints.indexOf(c) + 1)).join('') +
       (ordI.length > 6 ? '<details><summary>Ver los ' + (ordI.length - 6) + ' intereses restantes</summary>' + ordI.slice(6).map((c) => tarjetaNodo(c, ints.indexOf(c) + 1)).join('') + '</details>' : '') + '</div>';
     const ordA = ordenAf(acts.filter((c) => c.estado !== 'descartado' && AFV(c).prioridad !== 'baja'));
     t += '<div class="tarjeta"><div class="etq">Actividades</div><h3>Qué podrías hacer en concreto</h3><p class="sub">Parten de lo que sé del interés al que pertenecen, y se afinan con experimentos.</p>' + ordA.slice(0, 5).map((c) => tarjetaNodo(c, 0)).join('') +
       (ordA.length > 5 ? '<details><summary>Ver las ' + (ordA.length - 5) + ' actividades restantes</summary>' + ordA.slice(5).map((c) => tarjetaNodo(c, 0)).join('') + '</details>' : '') + '</div>';
-    const inesp = ordenAf(acts.filter((c) => c.inesperado && c.estado !== 'descartado')).slice(0, 5);
-    if (inesp.length) t += '<div class="tarjeta"><div class="etq">Por descubrir</div><h3>Quizá no lo habías considerado</h3><p class="sub">Ideas que encajan con lo que me has contado, aunque no las hayas pensado.</p>' + inesp.map((c) => '<div class="item"><div class="cab"><b>' + esc(c.nombre) + '</b><b class="pct">' + AFV(c).afinidad + ' %</b></div><p>' + esc(c.razon_inesperada || '') + '</p></div>').join('') + '</div>';
+    const enc = (S.encaje || []).filter((e) => e.sin_evidencia_directa && e.estado !== 'descartado' && e.nivel === 2).sort((a, b) => b.encaje - a.encaje).slice(0, 6);
+    if (enc.length) t += '<div class="tarjeta"><div class="etq">Por descubrir</div><h3>Quizá no lo habías considerado</h3><p class="sub">Actividades que nunca hemos explorado y que comparten tus motivaciones. Son hipótesis: no cuentan como evidencia tuya hasta que las pruebes.</p>' + enc.map((e) => { const c = nodo(e.camino_id) || {}; return '<div class="item"><div class="cab"><b>' + esc(e.nombre) + '</b><b class="pct">' + e.encaje + ' %</b></div><small>Encaje por motivación · ' + CONF[e.confianza] + '</small><p>Comparte contigo: ' + esc(e.comparte || 'aún sin motivaciones en común claras') + '.</p>' + (c.razon_inesperada ? '<p>' + esc(c.razon_inesperada) + '</p>' : '') + '</div>'; }).join('') + '</div>';
     const mov = ramas.concat(ints).map((c) => ({ c: c, d: delta(c.id) })).filter((x) => x.d);
     const subs = mov.filter((x) => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 3), baja = mov.filter((x) => x.d < 0).sort((a, b) => a.d - b.d).slice(0, 3);
+    t += sabemosHtml();
     t += '<div class="tarjeta"><div class="etq">Evolución</div><h3>Qué gana y qué pierde fuerza</h3>' + (mov.length ? '<h3 style="margin:12px 0 4px">Ganan fuerza</h3>' + (subs.length ? subs.map((x) => '<div class="fila"><span>' + esc(x.c.nombre) + '</span><b>' + deltaTxt(x.d) + '</b></div>').join('') : '<p class="vacio">Ninguno todavía.</p>') + '<h3 style="margin:14px 0 4px">Pierden fuerza</h3>' + (baja.length ? baja.map((x) => '<div class="fila"><span>' + esc(x.c.nombre) + '</span><b>' + deltaTxt(x.d) + '</b></div>').join('') : '<p class="vacio">Ninguno todavía.</p>') : '<p class="vacio">Aún no hay cambios medibles. Se verán según añadas respuestas y experimentos.</p>') + '</div>';
     if (pausa.length) t += '<div class="tarjeta"><details style="margin-top:0"><summary style="border-top:0;padding:0">En pausa y descartados (' + pausa.length + ')</summary><p class="sub" style="margin-top:12px">Bajan de prioridad, pero no se borran: puedes recuperarlos cuando quieras.</p>' + pausa.map((c) => tarjetaNodo(c, ints.indexOf(c) + 1)).join('') + '</details></div>';
     t += '<div class="tarjeta guia"><details><summary>Cómo calculo estos porcentajes</summary>' +
@@ -495,18 +560,20 @@
   }
   function guiaHtml() {
     return '<div class="tarjeta guia"><details><summary>Guía de IKI: qué hace cada sección</summary>' +
-      '<p><b>Inicio.</b> Tu resumen: el experimento de la semana, las propuestas pendientes, lo que más encaja contigo, las dudas que más ayudan a afinar y la última hipótesis.</p>' +
-      '<p><b>Propuestas.</b> Claude te propone algo concreto y tú respondes de 1 (no estoy de acuerdo) a 6 (muy de acuerdo). No hay punto medio. Tus respuestas mueven las afinidades.</p>' +
-      '<p><b>Afinidad.</b> El círculo de intereses, el ranking de ramas, intereses y actividades concretas con su porcentaje, lo que encaja y por qué, las ideas por descubrir y cómo evolucionan. Cada interés se mide en cuatro dimensiones: atención, habilidad, disfrute y pasión.</p>' +
-      '<p><b>Balance.</b> Es esta sección, Retrato: patrones, tensiones y preferencias que Claude ha detectado, y las hipótesis para que marques Me reconozco o No exactamente.</p>' +
-      '<p><b>Experimento.</b> Cada semana Claude te propone un experimento de una hora para probar algo de verdad. Al terminar contestas cuatro preguntas de 1 a 6. Es lo que más pesa para saber si algo te apasiona.</p>' +
-      '<p><b>Cómo usarla.</b> Responde las propuestas, contesta en el chat las preguntas de Claude y haz el experimento de la semana. Revisa de vez en cuando el balance y mira cómo cambia la afinidad.</p>' +
+      '<p><b>Inicio.</b> Lo que hay de nuevo: un descubrimiento que Claude te presenta, el seguimiento de un experimento, el experimento de la semana, las propuestas pendientes y lo que Claude está comprobando ahora.</p>' +
+      '<p><b>Descubrimientos.</b> Cuando Claude detecta un patrón, te presenta una actividad concreta y te explica por qué podría encajar. Respondes cuánta curiosidad te despierta, del 1 al 6.</p>' +
+      '<p><b>Propuestas.</b> Claude te propone algo concreto y respondes de 1 (no estoy de acuerdo) a 6 (muy de acuerdo). No hay punto medio.</p>' +
+      '<p><b>Afinidad.</b> Qué te mueve, qué ramas, intereses y actividades encajan, qué actividades nuevas podrían gustarte, qué sabemos con seguridad y qué falta, y cómo cambia todo. Cada interés se mide en atención, habilidad, disfrute y pasión.</p>' +
+      '<p><b>Retrato.</b> El balance de patrones, tensiones y preferencias, las señales de una pasión real y las hipótesis que puedes confirmar o rechazar.</p>' +
+      '<p><b>Experimento y seguimiento.</b> Cada semana, una prueba de una hora. Unos días después te preguntaré si lo has retomado por tu cuenta, porque la emoción inicial no es una pasión sostenida.</p>' +
+      '<p><b>Cómo usarla.</b> Responde en el chat las preguntas de Claude, reacciona a los descubrimientos, contesta las propuestas y haz los experimentos. Lo que cuenta más es lo que haces, más que lo que dices.</p>' +
       '<p><b>Opcionales.</b> Mis actividades, el diario de registro y los patrones están en Más herramientas. No hace falta usarlos.</p>' +
       '</details></div>';
   }
   function vRetrato() {
     let t = '<div class="tarjeta"><div class="etq">Retrato</div><h2>Balance general</h2><p class="sub">Lo que sabemos de ti hasta ahora: patrones, tensiones y preferencias.</p></div>';
     t += balanceHtml();
+    t += senalesHtml();
     t += pistasHtml();
     t += '<div class="tarjeta"><h3>Más herramientas</h3><p class="sub">Opcionales, por si algún día te sirven.</p><div class="acciones" style="flex-direction:column;margin-top:0"><button class="btn" data-ir="explorar">Mis actividades</button><button class="btn" data-ir="registro">Diario de registro</button><button class="btn" data-ir="patrones">Patrones de mis registros</button><a class="btn" href="perfil.html">Perfil base: enlace y nudo</a></div></div>';
     t += guiaHtml();
@@ -547,16 +614,18 @@
     'eliminar-interes': (b) => { if (confirm('¿Eliminar este interés? Sus registros se conservan.')) guarda(async () => { await api('DELETE', 'iki_intereses', 'id=eq.' + b.dataset.id); S.intereses = S.intereses.filter((x) => x.id !== b.dataset.id); S.registros.forEach((r) => { if (r.interes_id === b.dataset.id) r.interes_id = null; }); }); },
     'valorar-pista': (b) => guarda(async () => { const x = S.pistas.filter((y) => y.id === b.dataset.id)[0]; const v = x.valoracion === b.dataset.v ? null : b.dataset.v; const r = await api('PATCH', 'iki_pistas', 'id=eq.' + x.id, { valoracion: v }); S.pistas = S.pistas.map((y) => (y.id === x.id ? r[0] : y)); }),
     'estado-camino': (b) => guarda(async () => { const r = await api('PATCH', 'iki_caminos', 'id=eq.' + b.dataset.id, { estado: b.dataset.v }); S.caminos = S.caminos.map((y) => (y.id === b.dataset.id ? r[0] : y)); }),
-    'responder': (b) => guarda(async () => { const r = await api('PATCH', 'iki_propuestas', 'id=eq.' + b.dataset.id, { respuesta: +b.dataset.v, respondida_at: new Date().toISOString() }); S.propuestas = S.propuestas.map((y) => (y.id === b.dataset.id ? r[0] : y)); }),
+    'responder': (b) => guarda(async () => { const r = await api('PATCH', 'iki_propuestas', 'id=eq.' + b.dataset.id, { respuesta: +b.dataset.v, respondida_at: new Date().toISOString() }); S.propuestas = S.propuestas.map((y) => (y.id === b.dataset.id ? r[0] : y)); await refrescaAfin(); }),
     'exp-nivel': (b) => { EXP[b.dataset.k] = +b.dataset.v; pintar(false); },
     'exp-guardar': () => {
       const x = pendienteExp();
       if (!x) return;
       if (EXP.a == null || EXP.b == null || EXP.c == null || EXP.d == null) { estado('Responde las cuatro preguntas'); return; }
       const nota = val('exp-nota') || null;
-      guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'hecho', nocion: EXP.a, ganas: EXP.b, pensado: EXP.c, bien: EXP.d, nota: nota, hecho_at: new Date().toISOString() }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); EXP.a = EXP.b = EXP.c = EXP.d = null; }, ['exp-nota']);
+      guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'hecho', nocion: EXP.a, ganas: EXP.b, pensado: EXP.c, bien: EXP.d, nota: nota, hecho_at: new Date().toISOString() }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); EXP.a = EXP.b = EXP.c = EXP.d = null; await refrescaAfin(); }, ['exp-nota']);
     },
     'exp-omitir': () => { const x = pendienteExp(); if (x && confirm('¿Omitir este experimento?')) guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + x.id, { estado: 'omitido' }); S.experimentos = S.experimentos.map((e) => (e.id === x.id ? r[0] : e)); }); },
+    'reaccion-desc': (b) => guarda(async () => { const r = await api('PATCH', 'iki_descubrimientos', 'id=eq.' + b.dataset.id, { reaccion: +b.dataset.v, reaccion_at: new Date().toISOString(), estado: 'visto' }); S.desc = S.desc.map((x) => (x.id === b.dataset.id ? r[0] : x)); await refrescaAfin(); }),
+    'seg-guardar': (b) => guarda(async () => { const r = await api('PATCH', 'iki_experimentos', 'id=eq.' + b.dataset.id, { retomado: +b.dataset.v, seguimiento_at: new Date().toISOString() }); S.experimentos = S.experimentos.map((e) => (e.id === b.dataset.id ? r[0] : e)); await refrescaAfin(); }),
     'recargar': () => cargar(),
     'salir': () => IKIAuth.salir(),
     'cambiar-pass': () => {
@@ -604,6 +673,14 @@
       S.ev = [{ camino_id: 'r1', dimension: 'habilidad', valor: 0.7, texto: 'Los demás te llaman por tus conocimientos de informática cuando ellos no los tienen.' }, { camino_id: 'r1', dimension: 'disfrute', valor: 0.7, texto: 'Dijiste que trastear con informática te gusta mucho, y más con amigos.' }, { camino_id: 'i1', dimension: 'atencion', valor: 0.6, texto: 'Propuesta: Me atrae la idea de dedicarme a la ciberseguridad. Respondiste 5 de 6.' }, { camino_id: 'i4', dimension: 'disfrute', valor: -0.8, texto: 'Propuesta: Disfrutaría enseñando informática. Respondiste 2 de 6.' }];
       S.evol = [{ camino_id: 'i1', momento: '2026-10-25T23:00:00Z', afinidad: 54 }, { camino_id: 'i1', momento: '2026-10-31T23:00:00Z', afinidad: 58 }, { camino_id: 'i4', momento: '2026-10-25T23:00:00Z', afinidad: 50 }, { camino_id: 'i4', momento: '2026-10-31T23:00:00Z', afinidad: 47 }, { camino_id: 'r1', momento: '2026-10-25T23:00:00Z', afinidad: 60 }, { camino_id: 'r1', momento: '2026-10-31T23:00:00Z', afinidad: 62 }];
       S.dudas = [{ camino_id: 'i2', nombre: 'Sistemas y servidores', dimension: 'atencion', pregunta: 'Falta saber si Sistemas y servidores te llama la atención de verdad.' }, { camino_id: 'i1', nombre: 'Ciberseguridad', dimension: 'pasion', pregunta: 'Falta comprobar en la práctica si Ciberseguridad te apasiona: conviene un experimento de una hora.' }];
+      S.motiv = [{ motivacion_id: 'm1', nombre: 'Resolver problemas', descripcion: 'Te mueve encontrar la solución y ver que funciona.', score: 73, peso: 2, n: 1, confianza: 'media' }, { motivacion_id: 'm2', nombre: 'Autonomía y libertad', descripcion: 'Te mueve decidir tú qué haces y cómo.', score: 73, peso: 2, n: 1, confianza: 'media' }, { motivacion_id: 'm3', nombre: 'Competir', descripcion: 'Te mueve medirte con otros y ganar.', score: 50, peso: 0, n: 0, confianza: 'baja' }];
+      S.motivEv = [{ motivacion_id: 'm1', valor: 0.9, texto: 'Dijiste que lo que más disfrutas de trastear es resolver algo y que funcione.' }];
+      S.encaje = [{ camino_id: 'a1', nombre: 'Geocaching: buscar objetos escondidos con GPS', nivel: 2, encaje: 67, confianza: 'media', comparte: 'Explorar mundos y lugares · Resolver problemas', sin_evidencia_directa: true, estado: 'abierto' }];
+      S.senales = [{ senal: 'repite', n: 7 }, { senal: 'infancia', n: 3 }];
+      S.hip = [{ id: 'h1', texto: 'Tu motor es resolver y mejorar, más que competir contra otros.', objetivo: 'descartar', pregunta: 'Cuando juegas, ¿prefieres ganar a otras personas o superar tu propio récord?' }];
+      S.desc = [{ id: 'd1', estado: 'nuevo', titulo: 'Lo que te une no es la tecnología', patron: 'He detectado un patrón en varias de tus respuestas.', cierre: 'Dime cuánta curiosidad te despierta la primera.' }];
+      S.descCam = [{ descubrimiento_id: 'd1', camino_id: 'a1', relacion: 'Comparte contigo explorar y resolver pistas.', principal: true }, { descubrimiento_id: 'd1', camino_id: 'a2', relacion: 'Comparte resolver y probar.', principal: false }];
+      S.experimentos = S.experimentos.concat([{ id: 'x2', titulo: 'Dibujar un personaje', estado: 'hecho', nocion: 5, ganas: 4, pensado: 3, bien: 4, hecho_at: '2026-10-01T10:00:00Z', retomado: null }]);
       S.balance = [{ tipo: 'patron', texto: 'Lo que más te llena es resolver algo hasta que funciona.', evidencia: 'Dijiste que te pasa muy a menudo y te sientes orgulloso.' }, { tipo: 'contradiccion', texto: 'Quieres superarte, pero tu paz llega cuando no tienes nada que demostrar.', evidencia: 'Tu héroe se supera y tu paz está con personas cercanas.' }, { tipo: 'preferencia', texto: 'Te importa más la paz que un gran éxito.', evidencia: 'Respondiste 5 de 6.' }];
       S.pistas = [{ id: 'p1', texto: 'Buscas un estado de concentración y calma más que un resultado.', evidencia: 'Al dibujar buscabas concentración, tranquilidad y pasar el rato.', tipo: 'hipotesis', valoracion: 'me_reconozco' }, { id: 'p2', texto: 'Las historias y los mundos son un hilo común en lo que te atrae.', evidencia: 'Disfrutas de la historia y de explorar mundos en los videojuegos.', tipo: 'hipotesis', valoracion: null }, { id: 'p3', texto: 'Te gusta resolver algo y que funcione.', evidencia: 'Lo dijiste con claridad.', tipo: 'dato', valoracion: null }];
       cargando = false; fallo = false; pintar(false);
